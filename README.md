@@ -49,7 +49,16 @@ Build artifacts will be in the `dist/` directory.
 
 ## Environment Variables
 
-Create a `.env` file in the root directory:
+The frontend is configured to work with the production backend by default. For local development, create a `.env` file in the root directory:
+
+### Production (Default)
+No configuration needed - uses the hosted backend at:
+```env
+VITE_API_BASE_URL=https://foodbuddy-backend.vercel.app
+```
+
+### Local Development
+Create a `.env` file for local backend:
 
 ```env
 VITE_API_BASE_URL=http://localhost:8000
@@ -68,7 +77,10 @@ src/
 
 ## API Integration
 
-The frontend communicates with the FoodBuddy backend API. Make sure the backend is running on the configured API base URL.
+The frontend communicates with the FoodBuddy backend API.
+
+- **Production**: Uses the hosted backend at `https://foodbuddy-backend.vercel.app`
+- **Development**: Use a `.env` file to configure local backend URL (see Environment Variables section)
 
 ## Deployment
 
