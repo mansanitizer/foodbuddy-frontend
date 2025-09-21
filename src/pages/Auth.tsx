@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api, setToken, API_BASE } from '../lib/api'
 
 type Props = { onSuccess: () => void }
@@ -8,6 +9,7 @@ export default function Auth({ onSuccess }: Props) {
   const [password, setPassword] = useState('')
   const [isLogin, setIsLogin] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -33,8 +35,8 @@ export default function Auth({ onSuccess }: Props) {
         setToken(data.access_token)
       }
       onSuccess()
-      // Ensure navigation even if parent state lags
-      window.location.assign('/timeline')
+      // Navigate to timeline after successful auth
+      navigate('/timeline')
     } catch (err: any) {
       setError(err.message || 'Error')
     }
