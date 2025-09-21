@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { API_BASE, api } from '../lib/api'
+import { API_BASE } from '../lib/api'
 
 export default function ShareMeal() {
   const [files, setFiles] = useState<FileList | null>(null)

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { api } from '../lib/api'
 
 const DIETS = ['Omnivore','Vegetarian','Vegan','Keto','Paleo','Mediterranean']

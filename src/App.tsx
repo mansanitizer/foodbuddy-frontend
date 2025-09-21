@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { api, setToken, clearToken } from './lib/api'
 import Auth from './pages/Auth'
 import Onboarding from './pages/Onboarding'
 import Pairing from './pages/Pairing'

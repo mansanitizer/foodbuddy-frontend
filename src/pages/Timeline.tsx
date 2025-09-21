@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, clearToken } from '../lib/api'
+import { api } from '../lib/api'
 
 type Meal = {
   id: number
@@ -14,6 +14,7 @@ type Meal = {
   }
   meal_rating?: number
   suggestions?: string
+  confidence_score?: number
   logged_at: string
 }
 
@@ -27,6 +28,13 @@ type MealDetailModalProps = {
   isOpen: boolean
   onClose: () => void
   meal: Meal | null
+}
+
+interface CircularProgressProps {
+  percentage: number
+  size?: number
+  strokeWidth?: number
+  color?: string
 }
 
 function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
@@ -478,7 +486,7 @@ function MacroProgress({ label, value, target, unit, color, isOver }: MacroProgr
   )
 }
 
-function CircularProgress({ percentage, size = 120, strokeWidth = 8, color = 'var(--accent-orange)' }) {
+function CircularProgress({ percentage, size = 120, strokeWidth = 8, color = 'var(--accent-orange)' }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const strokeDasharray = `${circumference} ${circumference}`
@@ -526,7 +534,6 @@ export default function Timeline() {
   const [meals, setMeals] = useState<Meal[]>([])
   const [buddyMeals, setBuddyMeals] = useState<Meal[]>([])
   const [error, setError] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
   const [tdee, setTdee] = useState<number | null>(null)
   const [target, setTarget] = useState<number | null>(null)
   const [hasBuddy, setHasBuddy] = useState(false)
@@ -539,16 +546,6 @@ export default function Timeline() {
   const today = new Date()
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
-
-  const todayMeals = meals.filter(m => {
-    const mealDate = new Date(m.logged_at)
-    return mealDate.toDateString() === today.toDateString()
-  })
-
-  const yesterdayMeals = meals.filter(m => {
-    const mealDate = new Date(m.logged_at)
-    return mealDate.toDateString() === yesterday.toDateString()
-  })
 
   // Combine own meals and buddy meals into unified timeline
   const allMeals = [
@@ -613,15 +610,6 @@ export default function Timeline() {
       .catch(() => {})
   }, [])
 
-  async function handleUnpair() {
-    try {
-      await api('/pairing/unpair', { method: 'POST' })
-      setHasBuddy(false)
-      setBuddyMeals([])
-    } catch (e: any) {
-      setError(e.message || 'Unpair failed')
-    }
-  }
 
   async function deleteMeal(mealId: number) {
     if (!confirm('Delete this meal?')) return
@@ -634,7 +622,6 @@ export default function Timeline() {
   }
 
   async function handleMealUpload(mealName: string, files: FileList) {
-    setUploading(true)
     setError(null)
     try {
       const form = new FormData()
@@ -646,8 +633,6 @@ export default function Timeline() {
       setShowUploadModal(false)
     } catch (e: any) {
       setError(e.message || 'Upload failed')
-    } finally {
-      setUploading(false)
     }
   }
 
