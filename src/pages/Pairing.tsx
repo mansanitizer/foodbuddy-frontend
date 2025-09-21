@@ -31,7 +31,7 @@ export default function Pairing() {
         <input value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="Enter buddy code" style={{ width:'100%', padding:8 }} />
         <button onClick={accept} style={{ width:'100%', padding:10, marginTop:8 }}>Accept Pair</button>
       </div>
-      <button onClick={unpair} style={{ width:'100%', padding:10, marginTop:8, background:'#fee2e2' }}>Unpair</button>
+      <button onClick={unpair} style={{ width:'100%', padding:10, marginTop:8 }} className="danger">Unpair</button>
       {status && <div style={{ marginTop:8 }}>{status}</div>}
     </div>
   )
