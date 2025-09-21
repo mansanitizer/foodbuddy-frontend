@@ -14,6 +14,10 @@ function App() {
 		setAuthed(!!localStorage.getItem('token'))
 	}, [])
 
+	const handleLogout = () => {
+		setAuthed(false)
+	}
+
 	return (
 		<div style={{ minHeight: '100vh' }}>
 			<BrowserRouter>
@@ -23,7 +27,7 @@ function App() {
 					<Route path="/pair" element={authed ? <Pairing /> : <Navigate to="/auth" replace />} />
 					<Route path="/share" element={authed ? <ShareMeal /> : <Navigate to="/auth" replace />} />
 					<Route path="/timeline" element={authed ? <Timeline /> : <Navigate to="/auth" replace />} />
-					<Route path="/profile" element={authed ? <Profile /> : <Navigate to="/auth" replace />} />
+					<Route path="/profile" element={authed ? <Profile onLogout={handleLogout} /> : <Navigate to="/auth" replace />} />
 					<Route path="*" element={<Navigate to={authed ? '/timeline' : '/auth'} replace />} />
 				</Routes>
 			</BrowserRouter>
