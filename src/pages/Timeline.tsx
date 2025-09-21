@@ -1,0 +1,1121 @@
+import { useEffect, useState } from 'react'
+import { api, clearToken } from '../lib/api'
+
+type Meal = {
+  id: number
+  image_url: string
+  meal_name?: string
+  calories?: number
+  macros?: {
+    protein_g?: number
+    carbs_g?: number
+    fat_g?: number
+    fiber_g?: number
+  }
+  meal_rating?: number
+  suggestions?: string
+  logged_at: string
+}
+
+type MealUploadModalProps = {
+  isOpen: boolean
+  onClose: () => void
+  onUpload: (mealName: string, files: FileList) => void
+}
+
+type MealDetailModalProps = {
+  isOpen: boolean
+  onClose: () => void
+  meal: Meal | null
+}
+
+function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
+  const [mealName, setMealName] = useState('')
+  const [files, setFiles] = useState<FileList | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+
+  if (!isOpen) return null
+
+  const handleUpload = () => {
+    if (!files || files.length === 0) return
+    setIsUploading(true)
+    onUpload(mealName, files)
+    setIsUploading(false)
+    onClose()
+    setMealName('')
+    setFiles(null)
+  }
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        backgroundColor: 'var(--bg-secondary)',
+        borderRadius: '16px',
+        padding: '24px',
+        width: '90%',
+        maxWidth: '400px',
+        margin: '20px'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Add Meal</h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              fontSize: '24px',
+              cursor: 'pointer'
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={e => setFiles(e.target.files)}
+          style={{
+            display: 'block',
+            width: '100%',
+            marginBottom: '16px',
+            padding: '12px',
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            color: 'var(--text-primary)'
+          }}
+        />
+
+        <input
+          placeholder="Meal name (optional)"
+          value={mealName}
+          onChange={e => setMealName(e.target.value)}
+          style={{
+            display: 'block',
+            width: '100%',
+            marginBottom: '20px',
+            padding: '12px',
+            backgroundColor: 'var(--bg-tertiary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            color: 'var(--text-primary)'
+          }}
+        />
+
+        <button
+          onClick={handleUpload}
+          disabled={isUploading || !files?.length}
+          style={{
+            width: '100%',
+            padding: '12px',
+            backgroundColor: 'var(--accent-orange)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '500',
+            cursor: isUploading || !files?.length ? 'not-allowed' : 'pointer',
+            opacity: isUploading || !files?.length ? 0.6 : 1
+          }}
+        >
+          {isUploading ? 'Uploading...' : 'Upload Meal'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
+  if (!isOpen || !meal) return null
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        backgroundColor: 'var(--bg-secondary)',
+        borderRadius: '16px',
+        padding: '24px',
+        width: '90%',
+        maxWidth: '500px',
+        margin: '20px',
+        maxHeight: '80vh',
+        overflow: 'auto'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Meal Details</h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              fontSize: '24px',
+              cursor: 'pointer'
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <img
+            src={meal.image_url}
+            style={{
+              width: '100%',
+              height: '200px',
+              objectFit: 'cover',
+              borderRadius: '12px',
+              marginBottom: '16px'
+            }}
+          />
+
+          <h4 style={{
+            margin: '0 0 8px 0',
+            color: 'var(--text-primary)',
+            fontSize: '20px'
+          }}>
+            {meal.meal_name || 'Meal'}
+          </h4>
+
+          <p style={{
+            margin: '0 0 16px 0',
+            color: 'var(--text-secondary)',
+            fontSize: '14px'
+          }}>
+            Logged at: {new Date(meal.logged_at).toLocaleString()}
+          </p>
+        </div>
+
+        {/* Nutritional Information */}
+        <div style={{
+          backgroundColor: 'var(--bg-tertiary)',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '16px'
+        }}>
+          <h5 style={{
+            margin: '0 0 12px 0',
+            color: 'var(--text-primary)',
+            fontSize: '16px'
+          }}>
+            Nutritional Information
+          </h5>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px'
+          }}>
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Calories:</span>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                {meal.calories || 0} kcal
+              </div>
+            </div>
+
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Confidence:</span>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                {meal.confidence_score ? Math.round(meal.confidence_score * 100) : 0}%
+              </div>
+            </div>
+
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Rating:</span>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                {meal.meal_rating ? `${meal.meal_rating}/10` : 'N/A'}
+              </div>
+            </div>
+
+            <div>
+              <span style={{ color: 'var(--text-secondary)' }}>Protein:</span>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                {meal.macros?.protein_g || 0}g
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Macronutrients */}
+        {meal.macros && (
+          <div style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '16px'
+          }}>
+            <h5 style={{
+              margin: '0 0 12px 0',
+              color: 'var(--text-primary)',
+              fontSize: '16px'
+            }}>
+              Macronutrients
+            </h5>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '12px'
+            }}>
+              <div>
+                <span style={{ color: 'var(--text-secondary)' }}>Protein:</span>
+                <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-primary)' }}>
+                  {meal.macros.protein_g || 0}g
+                </div>
+              </div>
+
+              <div>
+                <span style={{ color: 'var(--text-secondary)' }}>Carbs:</span>
+                <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-primary)' }}>
+                  {meal.macros.carbs_g || 0}g
+                </div>
+              </div>
+
+              <div>
+                <span style={{ color: 'var(--text-secondary)' }}>Fat:</span>
+                <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-primary)' }}>
+                  {meal.macros.fat_g || 0}g
+                </div>
+              </div>
+
+              <div>
+                <span style={{ color: 'var(--text-secondary)' }}>Fiber:</span>
+                <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-primary)' }}>
+                  {meal.macros.fiber_g || 0}g
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Suggestions */}
+        {meal.suggestions && (
+          <div style={{
+            backgroundColor: 'var(--bg-tertiary)',
+            borderRadius: '12px',
+            padding: '16px'
+          }}>
+            <h5 style={{
+              margin: '0 0 12px 0',
+              color: 'var(--text-primary)',
+              fontSize: '16px'
+            }}>
+              Suggestions
+            </h5>
+            <p style={{
+              margin: 0,
+              color: 'var(--text-secondary)',
+              fontStyle: 'italic'
+            }}>
+              {meal.suggestions}
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ComingSoonModal({ isOpen, onClose, title }: { isOpen: boolean; onClose: () => void; title: string }) {
+  if (!isOpen) return null
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000
+    }}>
+      <div style={{
+        backgroundColor: 'var(--bg-secondary)',
+        borderRadius: '16px',
+        padding: '24px',
+        width: '90%',
+        maxWidth: '300px',
+        margin: '20px',
+        textAlign: 'center'
+      }}>
+        <h3 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)' }}>{title}</h3>
+        <p style={{ margin: '0 0 20px 0', color: 'var(--text-secondary)' }}>
+          Coming Soon! This feature is under development.
+        </p>
+        <button
+          onClick={onClose}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: 'var(--accent-orange)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  )
+}
+
+type MacroProgressProps = {
+  label: string
+  value: number  // remaining amount
+  target: number // target amount
+  unit: string
+  color: string
+  isOver?: boolean
+}
+
+function MacroProgress({ label, value, target, unit, color, isOver }: MacroProgressProps) {
+  // Calculate percentage: (remaining / target) * 100, but cap at 100%
+  const percentage = Math.min(Math.max((value / target) * 100, 0), 100)
+
+  return (
+    <div style={{
+      backgroundColor: 'var(--bg-secondary)',
+      borderRadius: '16px',
+      padding: '16px',
+      textAlign: 'center',
+      position: 'relative',
+      flex: 1,
+      margin: '0 4px'
+    }}>
+      <div style={{
+        fontSize: '24px',
+        fontWeight: 'bold',
+        color: isOver ? '#ef4444' : 'var(--text-primary)',
+        marginBottom: '4px'
+      }}>
+        {value}{unit}
+      </div>
+      <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+        {label}
+      </div>
+      <div style={{
+        width: '60px',
+        height: '60px',
+        borderRadius: '50%',
+        backgroundColor: 'var(--bg-tertiary)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: '0 auto',
+        position: 'relative'
+      }}>
+        <svg width="60" height="60" style={{ transform: 'rotate(-90deg)' }}>
+          <circle
+            cx="30"
+            cy="30"
+            r="25"
+            stroke="var(--border-color)"
+            strokeWidth="3"
+            fill="none"
+          />
+          <circle
+            cx="30"
+            cy="30"
+            r="25"
+            stroke={color}
+            strokeWidth="3"
+            fill="none"
+            strokeDasharray={`${2 * Math.PI * 25}`}
+            strokeDashoffset={`${2 * Math.PI * 25 * (1 - percentage / 100)}`}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div style={{
+          position: 'absolute',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          color: 'var(--text-primary)'
+        }}>
+          {Math.round(percentage)}%
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CircularProgress({ percentage, size = 120, strokeWidth = 8, color = 'var(--accent-orange)' }) {
+  const radius = (size - strokeWidth) / 2
+  const circumference = radius * 2 * Math.PI
+  const strokeDasharray = `${circumference} ${circumference}`
+  const strokeDashoffset = circumference - (percentage / 100) * circumference
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="var(--border-color)"
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        fontSize: '24px',
+        fontWeight: 'bold',
+        color: 'var(--text-primary)'
+      }}>
+        {Math.round(percentage)}%
+      </div>
+    </div>
+  )
+}
+
+export default function Timeline() {
+  const [meals, setMeals] = useState<Meal[]>([])
+  const [buddyMeals, setBuddyMeals] = useState<Meal[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [tdee, setTdee] = useState<number | null>(null)
+  const [target, setTarget] = useState<number | null>(null)
+  const [hasBuddy, setHasBuddy] = useState(false)
+  const [activeTab, setActiveTab] = useState<'today' | 'yesterday'>('today')
+  const [showUploadModal, setShowUploadModal] = useState(false)
+  const [showAnalyticsModal, setShowAnalyticsModal] = useState(false)
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
+
+  // Calculate today's and yesterday's meals
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  const todayMeals = meals.filter(m => {
+    const mealDate = new Date(m.logged_at)
+    return mealDate.toDateString() === today.toDateString()
+  })
+
+  const yesterdayMeals = meals.filter(m => {
+    const mealDate = new Date(m.logged_at)
+    return mealDate.toDateString() === yesterday.toDateString()
+  })
+
+  // Combine own meals and buddy meals into unified timeline
+  const allMeals = [
+    ...meals.map(meal => ({ ...meal, isOwn: true })),
+    ...buddyMeals.map(meal => ({ ...meal, isOwn: false }))
+  ]
+
+  // Sort all meals chronologically (newest first)
+  const sortedAllMeals = allMeals.sort((a, b) =>
+    new Date(b.logged_at).getTime() - new Date(a.logged_at).getTime()
+  )
+
+  const displayedMeals = activeTab === 'today'
+    ? sortedAllMeals.filter(m => {
+        const mealDate = new Date(m.logged_at)
+        return mealDate.toDateString() === today.toDateString()
+      })
+    : sortedAllMeals.filter(m => {
+        const mealDate = new Date(m.logged_at)
+        return mealDate.toDateString() === yesterday.toDateString()
+      })
+
+  // Calculate calories consumed today (both own and buddy meals)
+  const todayAllMeals = sortedAllMeals.filter(m => {
+    const mealDate = new Date(m.logged_at)
+    return mealDate.toDateString() === today.toDateString()
+  })
+
+  const todayCalories = todayAllMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
+  const caloriesLeft = target ? Math.max(0, target - todayCalories) : (tdee || 2500)
+  const caloriesPercentage = target ? Math.min(100, (todayCalories / target) * 100) : 0
+
+  // Calculate macros consumed today (both own and buddy meals)
+  const todayMacros = todayAllMeals.reduce((acc, meal) => ({
+    protein: acc.protein + (meal.macros?.protein_g || 0),
+    carbs: acc.carbs + (meal.macros?.carbs_g || 0),
+    fat: acc.fat + (meal.macros?.fat_g || 0)
+  }), { protein: 0, carbs: 0, fat: 0 })
+
+  // Calculate target macros based on daily calorie target and macro percentages
+  // Note: Backend stores macro percentages (30% protein, 40% carbs, 30% fat)
+  // but frontend currently uses hardcoded values for display
+  const targetCalories = target || tdee || 2500
+
+  // Macro targets in grams (calculated from calorie target)
+  // 4 calories per gram of protein, 4 calories per gram of carbs, 9 calories per gram of fat
+  const targetMacros = {
+    protein: Math.round((targetCalories * 0.30) / 4), // 30% of calories from protein
+    carbs: Math.round((targetCalories * 0.40) / 4),   // 40% of calories from carbs
+    fat: Math.round((targetCalories * 0.30) / 9)      // 30% of calories from fat
+  }
+
+  useEffect(() => {
+    api<Meal[]>('/meals/mine').then(setMeals).catch(e => setError(String(e)))
+    api<Meal[]>('/meals/buddy').then(setBuddyMeals).catch(() => {})
+    api<{ id:number; email:string; name?:string; buddy_id?:number; tdee?:number; daily_calorie_target?:number }>('/users/me')
+      .then(u => { 
+        setTdee(u.tdee ?? null); 
+        setTarget(u.daily_calorie_target ?? null);
+        setHasBuddy(!!u.buddy_id);
+      })
+      .catch(() => {})
+  }, [])
+
+  async function handleUnpair() {
+    try {
+      await api('/pairing/unpair', { method: 'POST' })
+      setHasBuddy(false)
+      setBuddyMeals([])
+    } catch (e: any) {
+      setError(e.message || 'Unpair failed')
+    }
+  }
+
+  async function deleteMeal(mealId: number) {
+    if (!confirm('Delete this meal?')) return
+    try {
+      await api(`/meals/${mealId}`, { method: 'DELETE' })
+      setMeals(meals => meals.filter(m => m.id !== mealId))
+    } catch (e: any) {
+      setError(e.message || 'Delete failed')
+    }
+  }
+
+  async function handleMealUpload(mealName: string, files: FileList) {
+    setUploading(true)
+    setError(null)
+    try {
+      const form = new FormData()
+      for (let i = 0; i < files.length; i++) form.append('images', files[i])
+      if (mealName) form.append('meal_name', mealName)
+      const created = await api<Meal>('/meals/upload', { method: 'POST', body: form })
+      setMeals(m => [created, ...m])
+      // Close the upload modal after successful upload
+      setShowUploadModal(false)
+    } catch (e: any) {
+      setError(e.message || 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function handlePairClick() {
+    window.location.assign('/pair')
+  }
+
+  function handleSettingsClick() {
+    window.location.assign('/onboarding')
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+      paddingBottom: '80px'
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 20px',
+        borderBottom: '1px solid var(--border-color)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+            fwb
+      </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            onClick={() => setShowUploadModal(true)}
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '20px',
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            📷
+          </button>
+          <button 
+            onClick={handlePairClick}
+            style={{ 
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '20px',
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            😊
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div style={{
+        display: 'flex',
+        padding: '0 20px',
+        marginTop: '20px'
+      }}>
+        <button
+          onClick={() => setActiveTab('today')}
+          style={{
+            backgroundColor: activeTab === 'today' ? 'var(--accent-orange)' : 'transparent',
+            color: activeTab === 'today' ? 'white' : 'var(--text-secondary)',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            fontSize: '16px',
+            fontWeight: '500',
+            marginRight: '8px'
+          }}
+        >
+          Today
+        </button>
+        <button
+          onClick={() => setActiveTab('yesterday')}
+          style={{
+            backgroundColor: activeTab === 'yesterday' ? 'var(--accent-orange)' : 'transparent',
+            color: activeTab === 'yesterday' ? 'white' : 'var(--text-secondary)',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            fontSize: '16px',
+            fontWeight: '500'
+          }}
+        >
+          Yesterday
+        </button>
+      </div>
+
+      {/* Calories Left Section */}
+      <div style={{
+        backgroundColor: 'var(--bg-secondary)',
+        margin: '20px',
+        borderRadius: '16px',
+        padding: '24px',
+        textAlign: 'center'
+      }}>
+        <div style={{
+          fontSize: '48px',
+          fontWeight: 'bold',
+          color: 'var(--text-primary)',
+          marginBottom: '8px'
+        }}>
+          {caloriesLeft}
+        </div>
+        <div style={{
+          fontSize: '16px',
+          color: 'var(--text-secondary)',
+          marginBottom: '16px'
+        }}>
+          Calories left
+        </div>
+        <CircularProgress
+          percentage={caloriesPercentage}
+          size={120}
+          color="var(--accent-orange)"
+        />
+      </div>
+
+      {/* Macronutrients */}
+      <div style={{
+        display: 'flex',
+        gap: '12px',
+        padding: '0 20px',
+        marginBottom: '24px'
+      }}>
+        <MacroProgress
+          label="Protein left"
+          value={Math.max(0, targetMacros.protein - todayMacros.protein)}
+          target={targetMacros.protein}
+          unit="g"
+          color="#ef4444"
+          isOver={todayMacros.protein > targetMacros.protein}
+        />
+        <MacroProgress
+          label="Carbs left"
+          value={Math.max(0, targetMacros.carbs - todayMacros.carbs)}
+          target={targetMacros.carbs}
+          unit="g"
+          color="#f59e0b"
+          isOver={todayMacros.carbs > targetMacros.carbs}
+        />
+        <MacroProgress
+          label="Fats left"
+          value={Math.max(0, targetMacros.fat - todayMacros.fat)}
+          target={targetMacros.fat}
+          unit="g"
+          color="#3b82f6"
+          isOver={todayMacros.fat > targetMacros.fat}
+        />
+      </div>
+
+      {/* Unified Timeline Display */}
+      <div style={{ padding: '0 20px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '16px'
+        }}>
+          <h3 style={{
+            fontSize: '20px',
+            fontWeight: '600',
+            color: 'var(--text-primary)',
+            margin: 0
+          }}>
+            {activeTab === 'today' ? 'Today' : 'Yesterday'}
+          </h3>
+          {hasBuddy && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '12px',
+              color: 'var(--text-secondary)'
+            }}>
+              <div style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--accent-orange)',
+                border: '2px solid var(--bg-secondary)'
+              }}></div>
+              <span>Your meals</span>
+              <div style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--accent-blue)',
+                border: '2px solid var(--bg-secondary)'
+              }}></div>
+              <span>Buddy meals</span>
+            </div>
+          )}
+        </div>
+
+        {displayedMeals.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            color: 'var(--text-secondary)',
+            padding: '40px 0'
+          }}>
+            No meals logged {activeTab === 'today' ? 'today' : 'yesterday'}
+          </div>
+        ) : (
+          displayedMeals.map(m => (
+            <div
+              key={m.id}
+              onClick={() => setSelectedMeal(m)}
+              style={{
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '16px',
+                padding: '16px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+                borderLeft: `4px solid ${m.isOwn ? 'var(--accent-orange)' : 'var(--accent-blue)'}`,
+                position: 'relative'
+              }}
+            >
+              {/* Ownership indicator */}
+              <div style={{
+                position: 'absolute',
+                top: '-4px',
+                left: '-4px',
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor: m.isOwn ? 'var(--accent-orange)' : 'var(--accent-blue)',
+                border: '3px solid var(--bg-primary)',
+                zIndex: 1
+              }}></div>
+
+              <img
+                src={m.image_url}
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '12px',
+                  objectFit: 'cover'
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  color: 'var(--text-primary)',
+                  marginBottom: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  {m.meal_name || 'Meal'}
+                  {m.isOwn ? (
+                    <span style={{
+                      fontSize: '12px',
+                      color: 'var(--accent-orange)',
+                      fontWeight: '600'
+                    }}>
+                      (You)
+                    </span>
+                  ) : (
+                    <span style={{
+                      fontSize: '12px',
+                      color: 'var(--accent-blue)',
+                      fontWeight: '600'
+                    }}>
+                      (Buddy)
+                    </span>
+                  )}
+                </div>
+                <div style={{
+                  fontSize: '14px',
+                  color: 'var(--text-secondary)',
+                  marginBottom: '8px'
+                }}>
+                  {new Date(m.logged_at).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </div>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  fontSize: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    🔥 {m.calories || 0} kcal
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    ⚡ {m.macros?.protein_g || 0}g
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    🌾 {m.macros?.carbs_g || 0}g
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    💧 {m.macros?.fat_g || 0}g
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                {m.isOwn && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteMeal(m.id)
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      fontSize: '16px',
+                      cursor: 'pointer',
+                      padding: '4px'
+                    }}
+                  >
+                    🗑️
+                  </button>
+                )}
+                <div style={{
+                  color: 'var(--text-muted)',
+                  fontSize: '12px'
+                }}>
+                  Tap to view
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Bottom Navigation */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'var(--bg-secondary)',
+        borderTop: '1px solid var(--border-color)',
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: '12px 20px',
+        height: '80px'
+      }}>
+        <button style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '4px',
+          background: 'none',
+          border: 'none',
+          color: 'var(--text-secondary)',
+          fontSize: '12px'
+        }}>
+          <span style={{ fontSize: '20px' }}>🏠</span>
+          Home
+        </button>
+
+        <button
+          onClick={() => setShowAnalyticsModal(true)}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>📊</span>
+          Analytics
+        </button>
+
+        <button
+          onClick={handleSettingsClick}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>⚙️</span>
+          Settings
+        </button>
+
+        <button
+          onClick={() => setShowUploadModal(true)}
+          style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--accent-orange)',
+            border: 'none',
+            color: 'white',
+            fontSize: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(249, 115, 22, 0.3)',
+            cursor: 'pointer'
+          }}
+        >
+          +
+        </button>
+      </div>
+
+      {/* Modals */}
+      <MealUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={handleMealUpload}
+      />
+
+      <MealDetailModal
+        isOpen={selectedMeal !== null}
+        onClose={() => setSelectedMeal(null)}
+        meal={selectedMeal}
+      />
+
+      <ComingSoonModal
+        isOpen={showAnalyticsModal}
+        onClose={() => setShowAnalyticsModal(false)}
+        title="Analytics"
+      />
+
+      {error && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          backgroundColor: '#ef4444',
+          color: 'white',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          fontSize: '14px'
+        }}>
+          {error}
+        </div>
+      )}
+    </div>
+  )
+}
+

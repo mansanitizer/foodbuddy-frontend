@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network Test - Food with Benefits</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Food with Benefits - Network Test</h1>
+    <p>Your IP: <strong>192.168.1.8</strong></p>
+    
+    <div class="test">
+        <h3>Frontend Test</h3>
+        <p>If you can see this page, the frontend is accessible on the network!</p>
+        <p>URL: <code>http://192.168.1.8:3030/network_test.html</code></p>
+    </div>
+
+    <div class="test" id="api-test">
+        <h3>API Test</h3>
+        <button onclick="testAPI()">Test Backend Connection</button>
+        <div id="api-result"></div>
+    </div>
+
+    <div class="test">
+        <h3>Main App</h3>
+        <p><a href="http://192.168.1.8:3030">Go to Food with Benefits App</a></p>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('api-result');
+            result.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch('http://192.168.1.8:8000/docs');
+                if (response.ok) {
+                    result.innerHTML = '<p style="color: green;">✅ Backend is accessible!</p>';
+                    result.parentElement.className = 'test success';
+                } else {
+                    result.innerHTML = '<p style="color: red;">❌ Backend returned: ' + response.status + '</p>';
+                    result.parentElement.className = 'test error';
+                }
+            } catch (error) {
+                result.innerHTML = '<p style="color: red;">❌ Backend connection failed: ' + error.message + '</p>';
+                result.parentElement.className = 'test error';
+            }
+        }
+    </script>
+</body>
+</html>

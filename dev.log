@@ -1,0 +1,12 @@
+
+> frontend@0.0.0 dev
+> vite
+
+
+  VITE v5.4.20  ready in 238 ms
+
+  ➜  Local:   http://localhost:3030/
+  ➜  Network: http://192.168.1.8:3030/
+8:03:46 PM [vite] vite.config.ts changed, restarting server...
+8:03:46 PM [vite] server restarted.
+8:10:19 PM [vite] hmr update /src/pages/Timeline.tsx
