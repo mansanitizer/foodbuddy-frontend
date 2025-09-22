@@ -633,9 +633,7 @@ export default function Timeline() {
     window.location.assign('/pair')
   }
 
-  function handleSettingsClick() {
-    window.location.assign('/onboarding')
-  }
+  // Settings navigation handled by global BottomNav
 
   return (
     <div style={{
