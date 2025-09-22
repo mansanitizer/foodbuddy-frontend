@@ -835,7 +835,7 @@ export default function Timeline() {
           <AnimatePresence initial={false}>
             {displayedMeals.map((m, idx) => (
             <motion.div
-              key={m.id}
+              key={`${(m as any).isOwn ? 'mine' : 'buddy'}-${m.id}-${m.logged_at}`}
               onClick={() => setSelectedMeal(m)}
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
