@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { api } from '../lib/api'
 
 type Meal = {
@@ -42,8 +43,6 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
   const [files, setFiles] = useState<FileList | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
-  if (!isOpen) return null
-
   const handleUpload = () => {
     if (!files || files.length === 0) return
     setIsUploading(true)
@@ -53,33 +52,48 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
     setMealName('')
     setFiles(null)
   }
-
+  
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'var(--bg-secondary)',
-        borderRadius: '16px',
-        padding: '24px',
-        width: '90%',
-        maxWidth: '400px',
-        margin: '20px'
-      }}>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.98, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '16px',
+              padding: '20px',
+              width: '90%',
+              maxWidth: '400px',
+              margin: '20px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '20px'
+            marginBottom: '12px'
         }}>
           <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Add Meal</h3>
           <button
@@ -104,8 +118,8 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
           style={{
             display: 'block',
             width: '100%',
-            marginBottom: '16px',
-            padding: '12px',
+              marginBottom: '12px',
+              padding: '10px',
             backgroundColor: 'var(--bg-tertiary)',
             border: '1px solid var(--border-color)',
             borderRadius: '8px',
@@ -120,8 +134,8 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
           style={{
             display: 'block',
             width: '100%',
-            marginBottom: '20px',
-            padding: '12px',
+              marginBottom: '12px',
+              padding: '10px',
             backgroundColor: 'var(--bg-tertiary)',
             border: '1px solid var(--border-color)',
             borderRadius: '8px',
@@ -134,7 +148,7 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
           disabled={isUploading || !files?.length}
           style={{
             width: '100%',
-            padding: '12px',
+              padding: '10px',
             backgroundColor: 'var(--accent-orange)',
             color: 'white',
             border: 'none',
@@ -147,42 +161,57 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
         >
           {isUploading ? 'Uploading...' : 'Upload Meal'}
         </button>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
 function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
-  if (!isOpen || !meal) return null
-
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'var(--bg-secondary)',
-        borderRadius: '16px',
-        padding: '24px',
-        width: '90%',
-        maxWidth: '500px',
-        margin: '20px',
-        maxHeight: '80vh',
-        overflow: 'auto'
-      }}>
+    <AnimatePresence>
+      {isOpen && meal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 10, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '16px',
+              padding: '20px',
+              width: '90%',
+              maxWidth: '500px',
+              margin: '20px',
+              maxHeight: '80vh',
+              overflow: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '20px'
+          marginBottom: '12px'
         }}>
           <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Meal Details</h3>
           <button
@@ -204,17 +233,17 @@ function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
             src={meal.image_url}
             style={{
               width: '100%',
-              height: '200px',
+              height: '180px',
               objectFit: 'cover',
               borderRadius: '12px',
-              marginBottom: '16px'
+              marginBottom: '12px'
             }}
           />
 
           <h4 style={{
             margin: '0 0 8px 0',
             color: 'var(--text-primary)',
-            fontSize: '20px'
+            fontSize: '18px'
           }}>
             {meal.meal_name || 'Meal'}
           </h4>
@@ -222,7 +251,7 @@ function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
           <p style={{
             margin: '0 0 16px 0',
             color: 'var(--text-secondary)',
-            fontSize: '14px'
+            fontSize: '13px'
           }}>
             Logged at: {new Date(meal.logged_at).toLocaleString()}
           </p>
@@ -232,13 +261,13 @@ function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
         <div style={{
           backgroundColor: 'var(--bg-tertiary)',
           borderRadius: '12px',
-          padding: '16px',
-          marginBottom: '16px'
+          padding: '12px',
+          marginBottom: '12px'
         }}>
           <h5 style={{
             margin: '0 0 12px 0',
             color: 'var(--text-primary)',
-            fontSize: '16px'
+            fontSize: '14px'
           }}>
             Nutritional Information
           </h5>
@@ -250,21 +279,21 @@ function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
           }}>
             <div>
               <span style={{ color: 'var(--text-secondary)' }}>Calories:</span>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
                 {meal.calories || 0} kcal
               </div>
             </div>
 
             <div>
               <span style={{ color: 'var(--text-secondary)' }}>Confidence:</span>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
                 {meal.confidence_score ? Math.round(meal.confidence_score * 100) : 0}%
               </div>
             </div>
 
             <div>
               <span style={{ color: 'var(--text-secondary)' }}>Rating:</span>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
                 {meal.meal_rating ? `${meal.meal_rating}/10` : 'N/A'}
               </div>
             </div>
@@ -301,28 +330,28 @@ function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
             }}>
               <div>
                 <span style={{ color: 'var(--text-secondary)' }}>Protein:</span>
-                <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-primary)' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>
                   {meal.macros.protein_g || 0}g
                 </div>
               </div>
 
               <div>
                 <span style={{ color: 'var(--text-secondary)' }}>Carbs:</span>
-                <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-primary)' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>
                   {meal.macros.carbs_g || 0}g
                 </div>
               </div>
 
               <div>
                 <span style={{ color: 'var(--text-secondary)' }}>Fat:</span>
-                <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-primary)' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>
                   {meal.macros.fat_g || 0}g
                 </div>
               </div>
 
               <div>
                 <span style={{ color: 'var(--text-secondary)' }}>Fiber:</span>
-                <div style={{ fontSize: '16px', fontWeight: '500', color: 'var(--text-primary)' }}>
+                <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>
                   {meal.macros.fiber_g || 0}g
                 </div>
               </div>
@@ -335,12 +364,12 @@ function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
           <div style={{
             backgroundColor: 'var(--bg-tertiary)',
             borderRadius: '12px',
-            padding: '16px'
+            padding: '12px'
           }}>
             <h5 style={{
               margin: '0 0 12px 0',
               color: 'var(--text-primary)',
-              fontSize: '16px'
+              fontSize: '14px'
             }}>
               Suggestions
             </h5>
@@ -353,8 +382,10 @@ function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
             </p>
           </div>
         )}
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -424,26 +455,26 @@ function MacroProgress({ label, value, target, unit, color, isOver }: MacroProgr
     <div style={{
       backgroundColor: 'var(--bg-secondary)',
       borderRadius: '16px',
-      padding: '16px',
+      padding: '10px',
       textAlign: 'center',
       position: 'relative',
       flex: 1,
       margin: '0 4px'
     }}>
       <div style={{
-        fontSize: '24px',
+        fontSize: '18px',
         fontWeight: 'bold',
         color: isOver ? '#ef4444' : 'var(--text-primary)',
-        marginBottom: '4px'
+        marginBottom: '2px'
       }}>
         {value}{unit}
       </div>
-      <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
         {label}
       </div>
       <div style={{
-        width: '60px',
-        height: '60px',
+        width: '44px',
+        height: '44px',
         borderRadius: '50%',
         backgroundColor: 'var(--bg-tertiary)',
         display: 'flex',
@@ -452,30 +483,30 @@ function MacroProgress({ label, value, target, unit, color, isOver }: MacroProgr
         margin: '0 auto',
         position: 'relative'
       }}>
-        <svg width="60" height="60" style={{ transform: 'rotate(-90deg)' }}>
+        <svg width="44" height="44" style={{ transform: 'rotate(-90deg)' }}>
           <circle
-            cx="30"
-            cy="30"
-            r="25"
+            cx="22"
+            cy="22"
+            r="18"
             stroke="var(--border-color)"
             strokeWidth="3"
             fill="none"
           />
           <circle
-            cx="30"
-            cy="30"
-            r="25"
+            cx="22"
+            cy="22"
+            r="18"
             stroke={color}
             strokeWidth="3"
             fill="none"
-            strokeDasharray={`${2 * Math.PI * 25}`}
-            strokeDashoffset={`${2 * Math.PI * 25 * (1 - percentage / 100)}`}
+            strokeDasharray={`${2 * Math.PI * 18}`}
+            strokeDashoffset={`${2 * Math.PI * 18 * (1 - percentage / 100)}`}
             strokeLinecap="round"
           />
         </svg>
         <div style={{
           position: 'absolute',
-          fontSize: '12px',
+          fontSize: '10px',
           fontWeight: 'bold',
           color: 'var(--text-primary)'
         }}>
@@ -486,7 +517,7 @@ function MacroProgress({ label, value, target, unit, color, isOver }: MacroProgr
   )
 }
 
-function CircularProgress({ percentage, size = 120, strokeWidth = 8, color = 'var(--accent-orange)' }: CircularProgressProps) {
+function CircularProgress({ percentage, size = 80, strokeWidth = 8, color = 'var(--accent-orange)' }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2
   const circumference = radius * 2 * Math.PI
   const strokeDasharray = `${circumference} ${circumference}`
@@ -520,7 +551,7 @@ function CircularProgress({ percentage, size = 120, strokeWidth = 8, color = 'va
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        fontSize: '24px',
+        fontSize: '18px',
         fontWeight: 'bold',
         color: 'var(--text-primary)'
       }}>
@@ -738,29 +769,29 @@ export default function Timeline() {
       {/* Calories Left Section */}
       <div style={{
         backgroundColor: 'var(--bg-secondary)',
-        margin: '20px',
+        margin: '12px 20px 12px 20px',
         borderRadius: '16px',
-        padding: '24px',
+        padding: '12px 16px',
         textAlign: 'center'
       }}>
         <div style={{
-          fontSize: '48px',
+          fontSize: '28px',
           fontWeight: 'bold',
           color: 'var(--text-primary)',
-          marginBottom: '8px'
+          marginBottom: '4px'
         }}>
           {caloriesLeft}
         </div>
         <div style={{
-          fontSize: '16px',
+          fontSize: '13px',
           color: 'var(--text-secondary)',
-          marginBottom: '16px'
+          marginBottom: '10px'
         }}>
           Calories left
         </div>
         <CircularProgress
           percentage={caloriesPercentage}
-          size={120}
+          size={80}
           color="var(--accent-orange)"
         />
       </div>
@@ -768,9 +799,9 @@ export default function Timeline() {
       {/* Macronutrients */}
       <div style={{
         display: 'flex',
-        gap: '12px',
+        gap: '8px',
         padding: '0 20px',
-        marginBottom: '24px'
+        marginBottom: '12px'
       }}>
         <MacroProgress
           label="Protein left"
@@ -851,23 +882,29 @@ export default function Timeline() {
             No meals logged {activeTab === 'today' ? 'today' : 'yesterday'}
           </div>
         ) : (
-          displayedMeals.map(m => (
-            <div
+          <AnimatePresence initial={false}>
+            {displayedMeals.map((m, idx) => (
+            <motion.div
               key={m.id}
               onClick={() => setSelectedMeal(m)}
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -5, opacity: 0 }}
+              transition={{ delay: Math.min(idx * 0.03, 0.2) }}
               style={{
                 backgroundColor: 'var(--bg-secondary)',
                 borderRadius: '16px',
-                padding: '16px',
-                marginBottom: '12px',
+                padding: '12px',
+                marginBottom: '10px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s ease',
+                transition: 'background-color 0.2s ease, transform 0.15s ease',
                 borderLeft: `4px solid ${m.isOwn ? 'var(--accent-orange)' : 'var(--accent-blue)'}`,
                 position: 'relative'
               }}
+              whileHover={{ scale: 1.01 }}
             >
               {/* Ownership indicator */}
               <div style={{
@@ -885,18 +922,18 @@ export default function Timeline() {
               <img
                 src={m.image_url}
                 style={{
-                  width: '60px',
-                  height: '60px',
+                  width: '56px',
+                  height: '56px',
                   borderRadius: '12px',
                   objectFit: 'cover'
                 }}
               />
               <div style={{ flex: 1 }}>
                 <div style={{
-                  fontSize: '16px',
+                  fontSize: '15px',
                   fontWeight: '500',
                   color: 'var(--text-primary)',
-                  marginBottom: '4px',
+                  marginBottom: '2px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px'
@@ -921,9 +958,9 @@ export default function Timeline() {
                   )}
                 </div>
                 <div style={{
-                  fontSize: '14px',
+                  fontSize: '12px',
                   color: 'var(--text-secondary)',
-                  marginBottom: '8px'
+                  marginBottom: '6px'
                 }}>
                   {new Date(m.logged_at).toLocaleTimeString('en-US', {
                     hour: 'numeric',
@@ -934,7 +971,7 @@ export default function Timeline() {
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '16px',
+                  gap: '12px',
                   fontSize: '12px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -977,8 +1014,9 @@ export default function Timeline() {
                   Tap to view
                 </div>
               </div>
-            </div>
-          ))
+            </motion.div>
+          ))}
+          </AnimatePresence>
         )}
       </div>
 
@@ -1011,7 +1049,7 @@ export default function Timeline() {
         </button>
 
         <button
-          onClick={() => setShowAnalyticsModal(true)}
+          onClick={() => window.location.assign('/profile')}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -1080,11 +1118,7 @@ export default function Timeline() {
         meal={selectedMeal}
       />
 
-      <ComingSoonModal
-        isOpen={showAnalyticsModal}
-        onClose={() => setShowAnalyticsModal(false)}
-        title="Analytics"
-      />
+      {/* Analytics modal removed in favor of navigating to /profile */}
 
       {error && (
         <div style={{

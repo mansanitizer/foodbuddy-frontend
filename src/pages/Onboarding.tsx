@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { api } from '../lib/api'
 
 const DIETS = ['Omnivore','Vegetarian','Vegan','Keto','Paleo','Mediterranean']
@@ -42,10 +43,10 @@ export default function Onboarding() {
 
   return (
     <div style={{ maxWidth: 560, margin: '1rem auto', padding: 16 }}>
-      <h3>Onboarding</h3>
-      <input placeholder="Full Name" value={name} onChange={e=>setName(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:8 }} />
-      <input placeholder="Age" type="number" value={age} onChange={e=>setAge(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:8 }} />
-      <select value={gender} onChange={e=>setGender(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:8 }}>
+      <motion.h3 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>Onboarding</motion.h3>
+      <input placeholder="Full Name" value={name} onChange={e=>setName(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+      <input placeholder="Age" type="number" value={age} onChange={e=>setAge(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+      <select value={gender} onChange={e=>setGender(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }}>
         <option value="">Gender</option>
         <option>Male</option>
         <option>Female</option>
@@ -59,7 +60,7 @@ export default function Onboarding() {
             <input type="checkbox" checked={diets.includes(d)} onChange={e=> setDiets(v => e.target.checked ? [...v, d] : v.filter(x=>x!==d)) } /> {d}
           </label>
         ))}
-        <input placeholder="Custom restrictions" onChange={e=> e.target.value && setDiets(v => [...v, e.target.value])} style={{ display:'block', width:'100%', marginTop:8, padding:8 }} />
+        <input placeholder="Custom restrictions" onChange={e=> e.target.value && setDiets(v => [...v, e.target.value])} style={{ display:'block', width:'100%', marginTop:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
       </div>
       <div style={{ margin:'8px 0' }}>
         <div>Fitness Goals</div>
@@ -69,12 +70,14 @@ export default function Onboarding() {
           </label>
         ))}
       </div>
-      <input placeholder="Height (cm)" type="number" value={heightCm} onChange={e=>setHeightCm(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:8 }} />
-      <input placeholder="Weight (kg)" type="number" value={weightKg} onChange={e=>setWeightKg(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:8 }} />
-      <select value={activity} onChange={e=>setActivity(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:8 }}>
+      <input placeholder="Height (cm)" type="number" value={heightCm} onChange={e=>setHeightCm(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+      <input placeholder="Weight (kg)" type="number" value={weightKg} onChange={e=>setWeightKg(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+      <select value={activity} onChange={e=>setActivity(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }}>
         {ACTIVITY.map(a => <option key={a}>{a}</option>)}
       </select>
-      <button onClick={save} disabled={saving} style={{ width:'100%', padding:10 }}>{saving ? 'Saving...' : 'Continue'}</button>
+      <motion.button whileTap={{ scale: 0.98 }} onClick={save} disabled={saving} style={{ width:'100%', padding:12 }}>
+        {saving ? 'Saving...' : 'Continue'}
+      </motion.button>
     </div>
   )
 }
