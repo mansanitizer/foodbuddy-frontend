@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import BottomNav from './components/BottomNav'
 import Auth from './pages/Auth'
 import Onboarding from './pages/Onboarding'
 import Pairing from './pages/Pairing'
@@ -22,6 +23,7 @@ function RoutesWithAnimations({ authed, onLogout, onAuthed }: { authed: boolean;
           <Route path="/profile" element={authed ? <Profile onLogout={onLogout} /> : <Navigate to="/auth" replace />} />
           <Route path="*" element={<Navigate to={authed ? '/timeline' : '/auth'} replace />} />
         </Routes>
+        {authed && <BottomNav />}
       </motion.div>
     </AnimatePresence>
   )
