@@ -54,7 +54,7 @@ The frontend is configured to work with the production backend by default. For l
 ### Production (Default)
 No configuration needed - uses the hosted backend at:
 ```env
-VITE_API_BASE_URL=https://foodbuddy-backend.vercel.app
+VITE_API_BASE_URL=https://api.foodbuddy.iarm.me
 ```
 
 ### Local Development
@@ -79,7 +79,7 @@ src/
 
 The frontend communicates with the FoodBuddy backend API.
 
-- **Production**: Uses the hosted backend at `https://foodbuddy-backend.vercel.app`
+- **Production**: Uses the hosted backend at `https://api.foodbuddy.iarm.me`
 - **Development**: Use a `.env` file to configure local backend URL (see Environment Variables section)
 
 ## Deployment
