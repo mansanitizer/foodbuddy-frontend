@@ -38,6 +38,18 @@ interface CircularProgressProps {
   color?: string
 }
 
+// Parse backend timestamps robustly:
+// - If timezone info is present (Z or +hh:mm / -hh:mm), use as-is
+// - Otherwise, assume the timestamp is UTC and append 'Z'
+function parseMealDate(timestamp: string): Date {
+  const hasTimezone = /[zZ]|[+\-]\d{2}:?\d{2}$/.test(timestamp)
+  return new Date(hasTimezone ? timestamp : `${timestamp}Z`)
+}
+
+function isSameLocalDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
 function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
   const [mealName, setMealName] = useState('')
   const [files, setFiles] = useState<FileList | null>(null)
@@ -541,18 +553,18 @@ export default function Timeline() {
 
   const displayedMeals = activeTab === 'today'
     ? sortedAllMeals.filter(m => {
-        const mealDate = new Date(m.logged_at)
-        return mealDate.toDateString() === today.toDateString()
+        const mealDate = parseMealDate(m.logged_at)
+        return isSameLocalDay(mealDate, today)
       })
     : sortedAllMeals.filter(m => {
-        const mealDate = new Date(m.logged_at)
-        return mealDate.toDateString() === yesterday.toDateString()
+        const mealDate = parseMealDate(m.logged_at)
+        return isSameLocalDay(mealDate, yesterday)
       })
 
   // Calculate calories consumed today (both own and buddy meals)
   const todayAllMeals = sortedAllMeals.filter(m => {
-    const mealDate = new Date(m.logged_at)
-    return mealDate.toDateString() === today.toDateString()
+    const mealDate = parseMealDate(m.logged_at)
+    return isSameLocalDay(mealDate, today)
   })
 
   const todayCalories = todayAllMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
@@ -912,7 +924,7 @@ export default function Timeline() {
                   color: 'var(--text-secondary)',
                   marginBottom: '6px'
                 }}>
-                  {new Date(m.logged_at).toLocaleTimeString('en-US', {
+                  {parseMealDate(m.logged_at).toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     minute: '2-digit',
                     hour12: true
