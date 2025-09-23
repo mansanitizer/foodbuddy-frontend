@@ -176,6 +176,35 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
         >
           {isUploading ? 'Uploading...' : 'Upload Meal'}
         </button>
+        <AnimatePresence>
+          {isUploading && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              style={{ marginTop: '8px' }}
+            >
+              <div style={{
+                width: '100%',
+                height: '4px',
+                backgroundColor: 'var(--bg-tertiary)',
+                borderRadius: '9999px',
+                overflow: 'hidden'
+              }}>
+                <motion.div
+                  initial={{ x: '-30%' }}
+                  animate={{ x: '130%' }}
+                  transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{
+                    width: '30%',
+                    height: '100%',
+                    backgroundColor: '#22c55e'
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
           </motion.div>
         </motion.div>
       )}
@@ -542,7 +571,6 @@ export default function Timeline() {
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
   const [calorieMode, setCalorieMode] = useState<'left' | 'in'>('left')
   const [macroMode, setMacroMode] = useState<'left' | 'in'>('left')
-  const [isUploadingMeal, setIsUploadingMeal] = useState(false)
 
   // Calculate today's and yesterday's meals
   const today = new Date()
@@ -625,7 +653,6 @@ export default function Timeline() {
 
   async function handleMealUpload(mealName: string, files: FileList) {
     setError(null)
-    setIsUploadingMeal(true)
     try {
       const form = new FormData()
       for (let i = 0; i < files.length; i++) form.append('images', files[i])
@@ -635,8 +662,6 @@ export default function Timeline() {
       setShowUploadModal(false)
     } catch (e: any) {
       setError(e.message || 'Upload failed')
-    } finally {
-      setIsUploadingMeal(false)
     }
   }
 
@@ -653,29 +678,7 @@ export default function Timeline() {
       color: 'var(--text-primary)',
       paddingBottom: '80px'
     }}>
-      {isUploadingMeal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          backgroundColor: 'var(--bg-secondary)',
-          overflow: 'hidden',
-          zIndex: 1100
-        }}>
-          <motion.div
-            initial={{ x: '-30%' }}
-            animate={{ x: '130%' }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
-            style={{
-              width: '30%',
-              height: '100%',
-              backgroundColor: '#22c55e'
-            }}
-          />
-        </div>
-      )}
+      
       {/* Header */}
       <div style={{
         display: 'flex',
