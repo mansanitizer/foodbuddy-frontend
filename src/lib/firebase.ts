@@ -3,20 +3,19 @@ import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 const firebaseConfig = {
-  // TODO: Replace with your actual Firebase project configuration
-  // You can find these values in your Firebase project settings
-  apiKey: "your-firebase-api-key",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyCr4UejZPoSWi9JquwO32QeD8p3mJiEu4E",
+  authDomain: "foodbuddy-e48dd.firebaseapp.com",
+  projectId: "foodbuddy-e48dd",
+  storageBucket: "foodbuddy-e48dd.firebasestorage.app",
+  messagingSenderId: "803679285810",
+  appId: "1:803679285810:web:c4970429ceab9eed58c22b",
+  measurementId: "G-L6GL6B0D0E"
 };
 
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
-export { messaging };
+export { messaging, app };
 
 // Request permission and get FCM token
 export const requestNotificationPermission = async () => {
