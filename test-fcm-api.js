@@ -9,7 +9,7 @@ import https from 'https';
 
 // Configuration
 const BASE_URL = 'https://api.foodbuddy.iarm.me';
-const TEST_TOKEN = 'test-token-123'; // Replace with actual JWT token
+const TEST_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhc2hhcnJtMThAZ21haWwuY29tIiwiZXhwIjoxNzYxMTY1OTc1fQ.HiYfzgcdySnBaUBFCj2KVoNImQ9nE-U1zqEdatzqRCM'; // User's actual JWT token
 
 // Colors for console output
 const colors = {
