@@ -561,18 +561,18 @@ export default function Timeline() {
         return isSameLocalDay(mealDate, yesterday)
       })
 
-  // Calculate calories consumed today (both own and buddy meals)
-  const todayAllMeals = sortedAllMeals.filter(m => {
+  // Calculate calories consumed today (OWN meals only)
+  const todayMineMeals = meals.filter(m => {
     const mealDate = parseMealDate(m.logged_at)
     return isSameLocalDay(mealDate, today)
   })
 
-  const todayCalories = todayAllMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
+  const todayCalories = todayMineMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
   const caloriesLeft = target ? Math.max(0, target - todayCalories) : (tdee || 2500)
   const caloriesPercentage = target ? Math.min(100, (todayCalories / target) * 100) : 0
 
-  // Calculate macros consumed today (both own and buddy meals)
-  const todayMacros = todayAllMeals.reduce((acc, meal) => ({
+  // Calculate macros consumed today (OWN meals only)
+  const todayMacros = todayMineMeals.reduce((acc, meal) => ({
     protein: acc.protein + (meal.macros?.protein_g || 0),
     carbs: acc.carbs + (meal.macros?.carbs_g || 0),
     fat: acc.fat + (meal.macros?.fat_g || 0)
