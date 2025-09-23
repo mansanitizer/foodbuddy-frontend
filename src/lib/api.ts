@@ -29,3 +29,50 @@ export function clearToken() {
   localStorage.removeItem("token");
 }
 
+// Like and Comment API functions
+export interface LikeSummary {
+  meal_id: number;
+  likes_count: number;
+  liked_by_me: boolean;
+}
+
+export interface CommentPublic {
+  id: number;
+  meal_id: number;
+  user_id: number;
+  comment: string;
+  created_at: string;
+}
+
+export interface CommentCreate {
+  comment: string;
+}
+
+// Like a meal
+export async function likeMeal(mealId: number): Promise<LikeSummary> {
+  return api<LikeSummary>(`/meals/${mealId}/like`, { method: 'POST' });
+}
+
+// Unlike a meal
+export async function unlikeMeal(mealId: number): Promise<LikeSummary> {
+  return api<LikeSummary>(`/meals/${mealId}/like`, { method: 'DELETE' });
+}
+
+// Get like status for a meal
+export async function getLikeStatus(mealId: number): Promise<LikeSummary> {
+  return api<LikeSummary>(`/meals/${mealId}/likes`);
+}
+
+// Get comments for a meal
+export async function getComments(mealId: number): Promise<CommentPublic[]> {
+  return api<CommentPublic[]>(`/meals/${mealId}/comments`);
+}
+
+// Post a comment on a meal
+export async function postComment(mealId: number, comment: string): Promise<CommentPublic> {
+  return api<CommentPublic>(`/meals/${mealId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ comment })
+  });
+}
+

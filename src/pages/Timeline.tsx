@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { api } from '../lib/api'
+import { api, likeMeal, unlikeMeal, postComment } from '../lib/api'
+import type { CommentPublic as CommentPublicType } from '../lib/api'
 
 type Meal = {
   id: number
@@ -17,6 +18,9 @@ type Meal = {
   suggestions?: string
   confidence_score?: number
   logged_at: string
+  likes_count?: number
+  liked_by_me?: boolean
+  comments?: CommentPublicType[]
 }
 
 type MealUploadModalProps = {
@@ -29,6 +33,12 @@ type MealDetailModalProps = {
   isOpen: boolean
   onClose: () => void
   meal: Meal | null
+  onToggleLike: (mealId: number) => void
+  mealLikes: Record<number, { count: number; liked: boolean }>
+  mealComments: Record<number, CommentPublicType[]>
+  commentText: string
+  onCommentTextChange: (text: string) => void
+  onCommentSubmit: (mealId: number) => void
 }
 
 interface CircularProgressProps {
@@ -212,7 +222,17 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
   )
 }
 
-function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
+function MealDetailModal({
+  isOpen,
+  onClose,
+  meal,
+  onToggleLike,
+  mealLikes,
+  mealComments,
+  commentText,
+  onCommentTextChange,
+  onCommentSubmit
+}: MealDetailModalProps) {
   return (
     <AnimatePresence>
       {isOpen && meal && (
@@ -426,6 +446,139 @@ function MealDetailModal({ isOpen, onClose, meal }: MealDetailModalProps) {
             </p>
           </div>
         )}
+
+        {/* Like and Comment Section */}
+        <div style={{
+          backgroundColor: 'var(--bg-tertiary)',
+          borderRadius: '12px',
+          padding: '16px',
+          marginTop: '16px'
+        }}>
+          <h5 style={{
+            margin: '0 0 16px 0',
+            color: 'var(--text-primary)',
+            fontSize: '16px'
+          }}>
+            Interaction
+          </h5>
+
+          {/* Like Section */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '16px',
+            padding: '12px',
+            backgroundColor: 'var(--bg-secondary)',
+            borderRadius: '8px'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  padding: '4px'
+                }}
+                onClick={() => onToggleLike(meal.id)}
+                title={mealLikes[meal.id]?.liked || meal.liked_by_me ? 'Unlike this meal' : 'Like this meal'}
+              >
+                {mealLikes[meal.id]?.liked || meal.liked_by_me ? '❤️' : '🤍'}
+              </button>
+              <span style={{
+                color: 'var(--text-secondary)',
+                fontSize: '14px'
+              }}>
+                {mealLikes[meal.id]?.count ?? meal.likes_count ?? 0} likes
+              </span>
+            </div>
+          </div>
+
+          {/* Comments Section */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            {/* Comment Input */}
+            <div style={{
+              display: 'flex',
+              gap: '8px'
+            }}>
+              <input
+                type="text"
+                placeholder="Add a comment..."
+                value={commentText}
+                onChange={(e) => onCommentTextChange(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '20px',
+                  color: 'var(--text-primary)',
+                  fontSize: '14px'
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    onCommentSubmit(meal.id)
+                  }
+                }}
+              />
+              <button
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: 'var(--accent-orange)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+                onClick={() => onCommentSubmit(meal.id)}
+                disabled={!commentText.trim()}
+              >
+                Post
+              </button>
+            </div>
+
+            {/* Comments List */}
+            {(mealComments[meal.id] || meal.comments || []).length > 0 && (
+              <div style={{
+                maxHeight: '200px',
+                overflowY: 'auto'
+              }}>
+                {(mealComments[meal.id] || meal.comments || []).map((comment: CommentPublicType) => (
+                  <div key={comment.id} style={{
+                    padding: '8px 12px',
+                    backgroundColor: 'var(--bg-secondary)',
+                    borderRadius: '8px',
+                    marginBottom: '8px'
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      color: 'var(--text-primary)',
+                      marginBottom: '4px'
+                    }}>
+                      {comment.comment}
+                    </div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary)'
+                    }}>
+                      {new Date(comment.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
           </motion.div>
         </motion.div>
       )}
@@ -571,6 +724,10 @@ export default function Timeline() {
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
   const [calorieMode, setCalorieMode] = useState<'left' | 'in'>('left')
   const [macroMode, setMacroMode] = useState<'left' | 'in'>('left')
+  // Like and comment state
+  const [mealLikes, setMealLikes] = useState<Record<number, { count: number; liked: boolean }>>({})
+  const [mealComments, setMealComments] = useState<Record<number, CommentPublicType[]>>({})
+  const [commentText, setCommentText] = useState('')
 
   // Calculate today's and yesterday's meals
   const today = new Date()
@@ -667,6 +824,134 @@ export default function Timeline() {
 
   function handlePairClick() {
     window.location.assign('/pair')
+  }
+
+  // Like and comment functions
+  async function toggleLike(mealId: number) {
+    try {
+      setError(null)
+      const currentLikeState = mealLikes[mealId] || { count: 0, liked: false }
+
+      // Optimistically update UI
+      setMealLikes(prev => ({
+        ...prev,
+        [mealId]: {
+          count: currentLikeState.liked ? currentLikeState.count - 1 : currentLikeState.count + 1,
+          liked: !currentLikeState.liked
+        }
+      }))
+
+      // Update selected meal if it's the one being liked
+      if (selectedMeal?.id === mealId) {
+        setSelectedMeal(prev => prev ? {
+          ...prev,
+          likes_count: currentLikeState.liked ? (prev.likes_count || 0) - 1 : (prev.likes_count || 0) + 1,
+          liked_by_me: !currentLikeState.liked
+        } : null)
+      }
+
+      // Update all meals in the list
+      setMeals(prev => prev.map(meal =>
+        meal.id === mealId ? {
+          ...meal,
+          likes_count: currentLikeState.liked ? (meal.likes_count || 0) - 1 : (meal.likes_count || 0) + 1,
+          liked_by_me: !currentLikeState.liked
+        } : meal
+      ))
+
+      setBuddyMeals(prev => prev.map(meal =>
+        meal.id === mealId ? {
+          ...meal,
+          likes_count: currentLikeState.liked ? (meal.likes_count || 0) - 1 : (meal.likes_count || 0) + 1,
+          liked_by_me: !currentLikeState.liked
+        } : meal
+      ))
+
+      // Make API call
+      const result = currentLikeState.liked
+        ? await unlikeMeal(mealId)
+        : await likeMeal(mealId)
+
+      // Update with server response
+      setMealLikes(prev => ({
+        ...prev,
+        [mealId]: {
+          count: result.likes_count,
+          liked: result.liked_by_me
+        }
+      }))
+
+      // Update meals with server response
+      setMeals(prev => prev.map(meal =>
+        meal.id === mealId ? {
+          ...meal,
+          likes_count: result.likes_count,
+          liked_by_me: result.liked_by_me
+        } : meal
+      ))
+
+      setBuddyMeals(prev => prev.map(meal =>
+        meal.id === mealId ? {
+          ...meal,
+          likes_count: result.likes_count,
+          liked_by_me: result.liked_by_me
+        } : meal
+      ))
+
+    } catch (err: any) {
+      setError(err.message || 'Failed to update like')
+      // Revert optimistic update on error
+      const currentLikeState = mealLikes[mealId] || { count: 0, liked: false }
+      setMealLikes(prev => ({
+        ...prev,
+        [mealId]: {
+          count: currentLikeState.count,
+          liked: currentLikeState.liked
+        }
+      }))
+    }
+  }
+
+  async function handleCommentSubmit(mealId: number) {
+    if (!commentText.trim()) return
+
+    try {
+      setError(null)
+      const newComment = await postComment(mealId, commentText.trim())
+
+      // Update comments state
+      setMealComments(prev => ({
+        ...prev,
+        [mealId]: [newComment, ...(prev[mealId] || [])]
+      }))
+
+      // Update selected meal if it's the one being commented on
+      if (selectedMeal?.id === mealId) {
+        setSelectedMeal(prev => prev ? {
+          ...prev,
+          comments: [newComment, ...(prev.comments || [])]
+        } : null)
+      }
+
+      // Update meals with new comment
+      setMeals(prev => prev.map(meal =>
+        meal.id === mealId ? {
+          ...meal,
+          comments: [newComment, ...(meal.comments || [])]
+        } : meal
+      ))
+
+      setBuddyMeals(prev => prev.map(meal =>
+        meal.id === mealId ? {
+          ...meal,
+          comments: [newComment, ...(meal.comments || [])]
+        } : meal
+      ))
+
+      setCommentText('')
+    } catch (err: any) {
+      setError(err.message || 'Failed to post comment')
+    }
   }
 
   // Settings navigation handled by global BottomNav
@@ -1006,6 +1291,33 @@ export default function Timeline() {
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                {/* Like Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleLike(m.id)
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '18px',
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
+                  title={mealLikes[m.id]?.liked || m.liked_by_me ? 'Unlike this meal' : 'Like this meal'}
+                >
+                  {mealLikes[m.id]?.liked || m.liked_by_me ? '❤️' : '🤍'}
+                </button>
+
+                {/* Like Count */}
+                <div style={{
+                  color: 'var(--text-secondary)',
+                  fontSize: '11px',
+                  textAlign: 'center'
+                }}>
+                  {mealLikes[m.id]?.count ?? m.likes_count ?? 0}
+                </div>
+
                 {m.isOwn && (
                   <button
                     onClick={(e) => {
@@ -1050,6 +1362,12 @@ export default function Timeline() {
         isOpen={selectedMeal !== null}
         onClose={() => setSelectedMeal(null)}
         meal={selectedMeal}
+        onToggleLike={toggleLike}
+        mealLikes={mealLikes}
+        mealComments={mealComments}
+        commentText={commentText}
+        onCommentTextChange={setCommentText}
+        onCommentSubmit={handleCommentSubmit}
       />
 
       {/* Analytics modal removed in favor of navigating to /profile */}
