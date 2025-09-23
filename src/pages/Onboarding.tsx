@@ -1,12 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { api } from '../lib/api'
+import { api, clearToken } from '../lib/api'
+
+type Summary = {
+  current_streak_days: number
+  total_meals_logged: number
+  average_daily_calories?: number
+  goal_adherence_percent?: number
+}
+
+type Props = {
+  onLogout?: () => void
+}
 
 const DIETS = ['Omnivore','Vegetarian','Vegan','Keto','Paleo','Mediterranean']
 const GOALS = ['Weight Loss','Weight Gain','Muscle Building','Maintenance','Athletic Performance']
 const ACTIVITY = ['Sedentary','Lightly active','Moderately active','Very active','Extremely active']
 
-export default function Onboarding() {
+export default function Onboarding({ onLogout }: Props = {}) {
   const [name, setName] = useState('')
   const [age, setAge] = useState<number | ''>('')
   const [gender, setGender] = useState('')
@@ -16,6 +27,16 @@ export default function Onboarding() {
   const [weightKg, setWeightKg] = useState<number | ''>('')
   const [activity, setActivity] = useState('Sedentary')
   const [saving, setSaving] = useState(false)
+  const [summary, setSummary] = useState<Summary | null>(null)
+
+  useEffect(() => {
+    api<Summary>('/analytics/summary').then(setSummary)
+  }, [])
+
+  const handleLogout = () => {
+    clearToken()
+    onLogout?.()
+  }
 
   async function save() {
     setSaving(true)
@@ -43,6 +64,42 @@ export default function Onboarding() {
 
   return (
     <div style={{ maxWidth: 560, margin: '1rem auto', padding: 16 }}>
+      {/* Statistics Section */}
+      {summary && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          style={{
+            marginBottom: 24,
+            padding: 16,
+            backgroundColor: 'var(--bg-secondary)',
+            borderRadius: 12,
+            border: '1px solid var(--border-color)'
+          }}
+        >
+          <h4 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)' }}>Your Progress</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <strong style={{ color: 'var(--accent-color)' }}>Current streak</strong>
+              <div style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>{summary.current_streak_days} days</div>
+            </div>
+            <div>
+              <strong style={{ color: 'var(--accent-color)' }}>Total meals</strong>
+              <div style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>{summary.total_meals_logged}</div>
+            </div>
+            <div>
+              <strong style={{ color: 'var(--accent-color)' }}>Avg daily calories</strong>
+              <div style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>{summary.average_daily_calories ?? '-'}</div>
+            </div>
+            <div>
+              <strong style={{ color: 'var(--accent-color)' }}>Goal adherence</strong>
+              <div style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>{summary.goal_adherence_percent ?? '-'}%</div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <motion.h3 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>Onboarding</motion.h3>
       <input placeholder="Full Name" value={name} onChange={e=>setName(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
       <input placeholder="Age" type="number" value={age} onChange={e=>setAge(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
@@ -78,6 +135,28 @@ export default function Onboarding() {
       <motion.button whileTap={{ scale: 0.98 }} onClick={save} disabled={saving} style={{ width:'100%', padding:12 }}>
         {saving ? 'Saving...' : 'Continue'}
       </motion.button>
+
+      {/* Logout Section */}
+      {onLogout && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          style={{
+            marginTop: 32,
+            paddingTop: 16,
+            borderTop: '1px solid var(--border-color)'
+          }}
+        >
+          <button
+            onClick={handleLogout}
+            style={{ width: '100%', padding: 12 }}
+            className="danger"
+          >
+            Logout
+          </button>
+        </motion.div>
+      )}
     </div>
   )
 }
