@@ -408,21 +408,24 @@ type MacroProgressProps = {
   unit: string
   color: string
   isOver?: boolean
+  mode?: 'left' | 'in'
+  onToggle?: () => void
 }
 
-function MacroProgress({ label, value, target, unit, color, isOver }: MacroProgressProps) {
+function MacroProgress({ label, value, target, unit, color, isOver, mode = 'left', onToggle }: MacroProgressProps) {
   // Calculate percentage: (remaining / target) * 100, but cap at 100%
   const percentage = Math.min(Math.max((value / target) * 100, 0), 100)
 
   return (
-    <div style={{
+    <div onClick={onToggle} style={{
       backgroundColor: 'var(--bg-secondary)',
       borderRadius: '16px',
       padding: '10px',
       textAlign: 'center',
       position: 'relative',
       flex: 1,
-      margin: '0 4px'
+      margin: '0 4px',
+      cursor: 'pointer'
     }}>
       <div style={{
         fontSize: '18px',
@@ -433,7 +436,7 @@ function MacroProgress({ label, value, target, unit, color, isOver }: MacroProgr
         {value}{unit}
       </div>
       <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-        {label}
+        {label} {mode === 'left' ? 'left' : 'in'}
       </div>
       <div style={{
         width: '44px',
@@ -534,6 +537,8 @@ export default function Timeline() {
   const [activeTab, setActiveTab] = useState<'today' | 'yesterday'>('today')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
+  const [calorieMode, setCalorieMode] = useState<'left' | 'in'>('left')
+  const [macroMode, setMacroMode] = useState<'left' | 'in'>('left')
 
   // Calculate today's and yesterday's meals
   const today = new Date()
@@ -567,12 +572,12 @@ export default function Timeline() {
     return isSameLocalDay(mealDate, today)
   })
 
-  const todayCalories = todayMineMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
-  const caloriesLeft = target ? Math.max(0, target - todayCalories) : (tdee || 2500)
-  const caloriesPercentage = target ? Math.min(100, (todayCalories / target) * 100) : 0
+  const todayCaloriesIn = todayMineMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
+  const caloriesLeft = target ? Math.max(0, target - todayCaloriesIn) : (tdee || 2500)
+  const caloriesPercentage = target ? Math.min(100, (todayCaloriesIn / target) * 100) : 0
 
   // Calculate macros consumed today (OWN meals only)
-  const todayMacros = todayMineMeals.reduce((acc, meal) => ({
+  const todayMacrosIn = todayMineMeals.reduce((acc, meal) => ({
     protein: acc.protein + (meal.macros?.protein_g || 0),
     carbs: acc.carbs + (meal.macros?.carbs_g || 0),
     fat: acc.fat + (meal.macros?.fat_g || 0)
@@ -726,8 +731,8 @@ export default function Timeline() {
         </button>
       </div>
 
-      {/* Calories Left Section */}
-      <div style={{
+      {/* Calories Section - tap to toggle */}
+      <div onClick={() => setCalorieMode(m => m === 'left' ? 'in' : 'left')} style={{
         backgroundColor: 'var(--bg-secondary)',
         margin: '12px 20px 12px 20px',
         borderRadius: '16px',
@@ -740,14 +745,14 @@ export default function Timeline() {
           color: 'var(--text-primary)',
           marginBottom: '4px'
         }}>
-          {caloriesLeft}
+          {calorieMode === 'left' ? caloriesLeft : todayCaloriesIn}
         </div>
         <div style={{
           fontSize: '13px',
           color: 'var(--text-secondary)',
           marginBottom: '10px'
         }}>
-          Calories left
+          Calories {calorieMode === 'left' ? 'left' : 'in'}
         </div>
         <CircularProgress
           percentage={caloriesPercentage}
@@ -756,7 +761,7 @@ export default function Timeline() {
         />
       </div>
 
-      {/* Macronutrients */}
+      {/* Macronutrients - tap any to toggle */}
       <div style={{
         display: 'flex',
         gap: '8px',
@@ -764,28 +769,34 @@ export default function Timeline() {
         marginBottom: '12px'
       }}>
         <MacroProgress
-          label="Protein left"
-          value={Math.max(0, targetMacros.protein - todayMacros.protein)}
+          label="Protein"
+          value={macroMode === 'left' ? Math.max(0, targetMacros.protein - todayMacrosIn.protein) : todayMacrosIn.protein}
           target={targetMacros.protein}
           unit="g"
           color="#ef4444"
-          isOver={todayMacros.protein > targetMacros.protein}
+          isOver={todayMacrosIn.protein > targetMacros.protein}
+          mode={macroMode}
+          onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')}
         />
         <MacroProgress
-          label="Carbs left"
-          value={Math.max(0, targetMacros.carbs - todayMacros.carbs)}
+          label="Carbs"
+          value={macroMode === 'left' ? Math.max(0, targetMacros.carbs - todayMacrosIn.carbs) : todayMacrosIn.carbs}
           target={targetMacros.carbs}
           unit="g"
           color="#f59e0b"
-          isOver={todayMacros.carbs > targetMacros.carbs}
+          isOver={todayMacrosIn.carbs > targetMacros.carbs}
+          mode={macroMode}
+          onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')}
         />
         <MacroProgress
-          label="Fats left"
-          value={Math.max(0, targetMacros.fat - todayMacros.fat)}
+          label="Fats"
+          value={macroMode === 'left' ? Math.max(0, targetMacros.fat - todayMacrosIn.fat) : todayMacrosIn.fat}
           target={targetMacros.fat}
           unit="g"
           color="#3b82f6"
-          isOver={todayMacros.fat > targetMacros.fat}
+          isOver={todayMacrosIn.fat > targetMacros.fat}
+          mode={macroMode}
+          onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')}
         />
       </div>
 
