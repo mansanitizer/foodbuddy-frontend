@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { api, clearToken } from '../lib/api'
+import { api } from '../lib/api'
 
 type Summary = {
   current_streak_days: number

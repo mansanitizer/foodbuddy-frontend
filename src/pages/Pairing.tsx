@@ -64,21 +64,19 @@ export default function Pairing({ onLogout }: Props = {}) {
       {status && <div style={{ marginTop:8 }}>{status}</div>}
 
       {/* Logout Section */}
-      {onLogout && (
-        <div style={{
-          marginTop: 32,
-          paddingTop: 16,
-          borderTop: '1px solid var(--border-color)'
-        }}>
-          <button
-            onClick={handleLogout}
-            style={{ width: '100%', padding: 12 }}
-            className="danger"
-          >
-            Logout
-          </button>
-        </div>
-      )}
+      <div style={{
+        marginTop: 32,
+        paddingTop: 16,
+        borderTop: '1px solid var(--border-color)'
+      }}>
+        <button
+          onClick={handleLogout}
+          style={{ width: '100%', padding: 12 }}
+          className="danger"
+        >
+          Logout
+        </button>
+      </div>
     </div>
   )
 }
