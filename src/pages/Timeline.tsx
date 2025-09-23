@@ -22,7 +22,7 @@ type Meal = {
 type MealUploadModalProps = {
   isOpen: boolean
   onClose: () => void
-  onUpload: (mealName: string, files: FileList) => void
+  onUpload: (mealName: string, files: FileList) => Promise<void>
 }
 
 type MealDetailModalProps = {
@@ -55,14 +55,17 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
   const [files, setFiles] = useState<FileList | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!files || files.length === 0) return
     setIsUploading(true)
-    onUpload(mealName, files)
-    setIsUploading(false)
-    onClose()
-    setMealName('')
-    setFiles(null)
+    try {
+      await onUpload(mealName, files)
+    } finally {
+      setIsUploading(false)
+      onClose()
+      setMealName('')
+      setFiles(null)
+    }
   }
   
   return (
@@ -539,6 +542,7 @@ export default function Timeline() {
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
   const [calorieMode, setCalorieMode] = useState<'left' | 'in'>('left')
   const [macroMode, setMacroMode] = useState<'left' | 'in'>('left')
+  const [isUploadingMeal, setIsUploadingMeal] = useState(false)
 
   // Calculate today's and yesterday's meals
   const today = new Date()
@@ -621,16 +625,18 @@ export default function Timeline() {
 
   async function handleMealUpload(mealName: string, files: FileList) {
     setError(null)
+    setIsUploadingMeal(true)
     try {
       const form = new FormData()
       for (let i = 0; i < files.length; i++) form.append('images', files[i])
       if (mealName) form.append('meal_name', mealName)
       const created = await api<Meal>('/meals/upload', { method: 'POST', body: form })
       setMeals(m => [created, ...m])
-      // Close the upload modal after successful upload
       setShowUploadModal(false)
     } catch (e: any) {
       setError(e.message || 'Upload failed')
+    } finally {
+      setIsUploadingMeal(false)
     }
   }
 
@@ -647,6 +653,29 @@ export default function Timeline() {
       color: 'var(--text-primary)',
       paddingBottom: '80px'
     }}>
+      {isUploadingMeal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '3px',
+          backgroundColor: 'var(--bg-secondary)',
+          overflow: 'hidden',
+          zIndex: 1100
+        }}>
+          <motion.div
+            initial={{ x: '-30%' }}
+            animate={{ x: '130%' }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+            style={{
+              width: '30%',
+              height: '100%',
+              backgroundColor: '#22c55e'
+            }}
+          />
+        </div>
+      )}
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -676,21 +705,35 @@ export default function Timeline() {
           >
             📷
           </button>
-          <button 
-            onClick={handlePairClick}
-            style={{ 
-              backgroundColor: 'var(--bg-secondary)',
-              borderRadius: '20px',
-              padding: '8px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            😊
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={handlePairClick}
+              style={{ 
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '20px',
+                padding: '8px 12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              😊
+            </button>
+            {hasBuddy && (
+              <span style={{
+                position: 'absolute',
+                top: '-2px',
+                right: '-2px',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: '#22c55e',
+                border: '2px solid var(--bg-secondary)'
+              }} />
+            )}
+          </div>
         </div>
       </div>
 
