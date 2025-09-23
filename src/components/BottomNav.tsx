@@ -35,7 +35,7 @@ export default function BottomNav() {
       </button>
 
       <button
-        onClick={() => go('/profile')}
+        onClick={() => go('/suggestions')}
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -48,12 +48,12 @@ export default function BottomNav() {
           cursor: 'pointer'
         }}
       >
-        <span style={{ fontSize: '20px' }}>📊</span>
-        Analytics
+        <span style={{ fontSize: '20px' }}>💡</span>
+        Suggestions
       </button>
 
       <button
-        onClick={() => go('/pair')}
+        onClick={() => go('/onboarding')}
         style={{
           display: 'flex',
           flexDirection: 'column',
