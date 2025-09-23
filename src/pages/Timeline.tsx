@@ -182,24 +182,24 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              style={{ marginTop: '8px' }}
+              style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
             >
-              <div style={{
-                width: '100%',
-                height: '4px',
-                backgroundColor: 'var(--bg-tertiary)',
-                borderRadius: '9999px',
-                overflow: 'hidden'
-              }}>
-                <motion.div
-                  initial={{ x: '-30%' }}
-                  animate={{ x: '130%' }}
-                  transition={{ duration: 1.0, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{
-                    width: '30%',
-                    height: '100%',
-                    backgroundColor: '#22c55e'
-                  }}
+              <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>Uploading…</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <motion.span
+                  animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.6, 1, 0.6] }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut', delay: 0 }}
+                  style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }}
+                />
+                <motion.span
+                  animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.6, 1, 0.6] }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut', delay: 0.15 }}
+                  style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }}
+                />
+                <motion.span
+                  animate={{ scale: [0.8, 1.1, 0.8], opacity: [0.6, 1, 0.6] }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+                  style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }}
                 />
               </div>
             </motion.div>
