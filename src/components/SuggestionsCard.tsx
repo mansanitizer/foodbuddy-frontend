@@ -1,6 +1,6 @@
 // components/SuggestionsCard.tsx
 import React from 'react';
-import { SuggestionItem, RestaurantSuggestion } from '../lib/suggestions';
+import type { SuggestionItem, RestaurantSuggestion } from '../lib/suggestions';
 
 interface SuggestionsCardProps {
   suggestions: SuggestionItem[];

@@ -1,6 +1,7 @@
 // hooks/useSuggestions.ts - Custom hook for managing suggestions state
 import { useState, useEffect, useCallback } from 'react';
-import { suggestionsApi, SuggestionsResponse } from '../lib/suggestions';
+import { suggestionsApi } from '../lib/suggestions';
+import type { SuggestionsResponse } from '../lib/suggestions';
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 

@@ -1,5 +1,5 @@
 // suggestions.ts - API service layer for meal suggestions
-import { apiClient } from './api'
+import { api } from './api'
 
 export interface SuggestionItem {
   title: string;
@@ -30,7 +30,6 @@ export interface SuggestionsResponse {
 
 export const suggestionsApi = {
   async getSuggestions(): Promise<SuggestionsResponse> {
-    const response = await apiClient.get('/recommendations/suggestions');
-    return response.data;
+    return api<SuggestionsResponse>('/recommendations/suggestions');
   }
 };

@@ -9,7 +9,7 @@ import ShareMeal from './pages/ShareMeal'
 import Timeline from './pages/Timeline'
 import Suggestions from './pages/Suggestions'
 
-function RoutesWithAnimations({ authed, onLogout, onAuthed }: { authed: boolean; onLogout: () => void; onAuthed: () => void }) {
+function RoutesWithAnimations({ authed, onAuthed }: { authed: boolean; onAuthed: () => void }) {
   const location = useLocation()
   return (
     <AnimatePresence mode="wait">
@@ -43,7 +43,7 @@ function App() {
 	return (
 		<div style={{ minHeight: '100vh' }}>
 			<BrowserRouter>
-        <RoutesWithAnimations authed={authed} onLogout={handleLogout} onAuthed={() => setAuthed(true)} />
+        <RoutesWithAnimations authed={authed} onAuthed={() => setAuthed(true)} />
 			</BrowserRouter>
 		</div>
 	)
