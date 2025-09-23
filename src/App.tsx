@@ -8,6 +8,8 @@ import Pairing from './pages/Pairing'
 import ShareMeal from './pages/ShareMeal'
 import Timeline from './pages/Timeline'
 import Suggestions from './pages/Suggestions'
+import NotificationTest from './pages/NotificationTest'
+import { NotificationManager } from './components/NotificationManager'
 
 function RoutesWithAnimations({ authed, onAuthed }: { authed: boolean; onAuthed: () => void }) {
   const location = useLocation()
@@ -21,9 +23,11 @@ function RoutesWithAnimations({ authed, onAuthed }: { authed: boolean; onAuthed:
           <Route path="/share" element={authed ? <ShareMeal /> : <Navigate to="/auth" replace />} />
           <Route path="/timeline" element={authed ? <Timeline /> : <Navigate to="/auth" replace />} />
           <Route path="/suggestions" element={authed ? <Suggestions /> : <Navigate to="/auth" replace />} />
+          <Route path="/notifications-test" element={authed ? <NotificationTest /> : <Navigate to="/auth" replace />} />
           <Route path="*" element={<Navigate to={authed ? '/timeline' : '/auth'} replace />} />
         </Routes>
         {authed && <BottomNav />}
+        {authed && <NotificationManager />}
       </motion.div>
     </AnimatePresence>
   )

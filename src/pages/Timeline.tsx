@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api, likeMeal, unlikeMeal, postComment } from '../lib/api'
 import type { CommentPublic as CommentPublicType } from '../lib/api'
+import { NotificationSettings } from '../components/NotificationSettings'
 
 type Meal = {
   id: number
@@ -1022,6 +1023,23 @@ export default function Timeline() {
               }} />
             )}
           </div>
+          <button
+            onClick={() => window.location.href = '/notifications-test'}
+            style={{
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: '20px',
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: 'var(--text-secondary)'
+            }}
+          >
+            🔔 Test
+          </button>
         </div>
       </div>
 
@@ -1130,6 +1148,9 @@ export default function Timeline() {
           onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')}
         />
       </div>
+
+      {/* Notification Settings */}
+      <NotificationSettings />
 
       {/* Unified Timeline Display */}
       <div style={{ padding: '0 20px' }}>
