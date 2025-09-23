@@ -36,10 +36,6 @@ function App() {
 		setAuthed(!!localStorage.getItem('token'))
 	}, [])
 
-	const handleLogout = () => {
-		setAuthed(false)
-	}
-
 	return (
 		<div style={{ minHeight: '100vh' }}>
 			<BrowserRouter>
