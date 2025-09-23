@@ -9,15 +9,11 @@ type Summary = {
   goal_adherence_percent?: number
 }
 
-type Props = {
-  onLogout?: () => void
-}
-
 const DIETS = ['Omnivore','Vegetarian','Vegan','Keto','Paleo','Mediterranean']
 const GOALS = ['Weight Loss','Weight Gain','Muscle Building','Maintenance','Athletic Performance']
 const ACTIVITY = ['Sedentary','Lightly active','Moderately active','Very active','Extremely active']
 
-export default function Onboarding({ onLogout }: Props = {}) {
+export default function Onboarding() {
   const [name, setName] = useState('')
   const [age, setAge] = useState<number | ''>('')
   const [gender, setGender] = useState('')
@@ -32,11 +28,6 @@ export default function Onboarding({ onLogout }: Props = {}) {
   useEffect(() => {
     api<Summary>('/analytics/summary').then(setSummary)
   }, [])
-
-  const handleLogout = () => {
-    clearToken()
-    onLogout?.()
-  }
 
   async function save() {
     setSaving(true)
@@ -135,28 +126,6 @@ export default function Onboarding({ onLogout }: Props = {}) {
       <motion.button whileTap={{ scale: 0.98 }} onClick={save} disabled={saving} style={{ width:'100%', padding:12 }}>
         {saving ? 'Saving...' : 'Continue'}
       </motion.button>
-
-      {/* Logout Section */}
-      {onLogout && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          style={{
-            marginTop: 32,
-            paddingTop: 16,
-            borderTop: '1px solid var(--border-color)'
-          }}
-        >
-          <button
-            onClick={handleLogout}
-            style={{ width: '100%', padding: 12 }}
-            className="danger"
-          >
-            Logout
-          </button>
-        </motion.div>
-      )}
     </div>
   )
 }

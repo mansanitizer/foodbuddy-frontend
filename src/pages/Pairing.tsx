@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
-import { api } from '../lib/api'
+import { api, clearToken } from '../lib/api'
 
-export default function Pairing() {
+type Props = {
+  onLogout?: () => void
+}
+
+export default function Pairing({ onLogout }: Props = {}) {
   const [code, setCode] = useState<string>('')
   const [generated, setGenerated] = useState<string>('')
   const [status, setStatus] = useState<string>('')
@@ -31,6 +35,11 @@ export default function Pairing() {
     setHasBuddy(false)
   }
 
+  const handleLogout = () => {
+    clearToken()
+    onLogout?.()
+  }
+
   return (
     <div style={{ maxWidth: 480, margin: '1rem auto', padding: 16 }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -53,6 +62,23 @@ export default function Pairing() {
       </div>
       <button onClick={unpair} style={{ width:'100%', padding:10, marginTop:8 }} className="danger">Unpair</button>
       {status && <div style={{ marginTop:8 }}>{status}</div>}
+
+      {/* Logout Section */}
+      {onLogout && (
+        <div style={{
+          marginTop: 32,
+          paddingTop: 16,
+          borderTop: '1px solid var(--border-color)'
+        }}>
+          <button
+            onClick={handleLogout}
+            style={{ width: '100%', padding: 12 }}
+            className="danger"
+          >
+            Logout
+          </button>
+        </div>
+      )}
     </div>
   )
 }

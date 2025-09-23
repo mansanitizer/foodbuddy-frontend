@@ -53,7 +53,7 @@ export default function BottomNav() {
       </button>
 
       <button
-        onClick={() => go('/onboarding')}
+        onClick={() => go('/pair')}
         style={{
           display: 'flex',
           flexDirection: 'column',
