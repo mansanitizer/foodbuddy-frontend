@@ -4,9 +4,11 @@ import { notificationApi, NotificationTemplates } from '../lib/notifications';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
 export default function NotificationTest() {
-  const { permission, isSupported } = usePushNotifications();
+  const { permission, isSupported, requestPermission, subscribeToNotifications } = usePushNotifications();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [reRegisterLoading, setReRegisterLoading] = useState(false);
+  const [permissionLoading, setPermissionLoading] = useState(false);
 
   const handleTestNotification = async (type: keyof typeof NotificationTemplates) => {
     setLoading(true);
@@ -69,6 +71,59 @@ export default function NotificationTest() {
       setMessage(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReGrantPermissions = async () => {
+    setPermissionLoading(true);
+    setMessage('');
+
+    try {
+      const result = await requestPermission();
+
+      if (result) {
+        setMessage('✅ Notification permissions granted successfully!');
+
+        // Also try to subscribe/re-register FCM token
+        setTimeout(async () => {
+          try {
+            const token = await subscribeToNotifications();
+            if (token) {
+              setMessage(prev => prev + ' FCM token registered successfully!');
+            }
+          } catch (tokenError) {
+            setMessage(prev => prev + ' (Note: FCM token registration may need manual refresh)');
+          }
+        }, 1000);
+      } else {
+        setMessage('❌ Permission request was denied or failed.');
+      }
+    } catch (error) {
+      console.error('Error re-granting permissions:', error);
+      setMessage('❌ Failed to re-grant permissions. Please try again.');
+    } finally {
+      setPermissionLoading(false);
+    }
+  };
+
+  const handleReRegisterToken = async () => {
+    setReRegisterLoading(true);
+    setMessage('');
+
+    try {
+      // Generate a new FCM token by subscribing again
+      const token = await subscribeToNotifications();
+
+      if (token) {
+        setMessage('✅ FCM token re-registered successfully!');
+      } else {
+        setMessage('❌ Failed to re-register FCM token. Please check permissions.');
+      }
+    } catch (error) {
+      console.error('Error re-registering FCM token:', error);
+      setMessage('❌ Failed to re-register FCM token. Please try again.');
+    } finally {
+      setReRegisterLoading(false);
     }
   };
 
@@ -147,6 +202,107 @@ export default function NotificationTest() {
             Click "Request Permission" in the browser to enable notifications
           </p>
         )}
+      </div>
+
+      {/* Utility Buttons */}
+      <div style={{
+        backgroundColor: 'var(--bg-secondary)',
+        borderRadius: '16px',
+        padding: '20px',
+        marginBottom: '20px'
+      }}>
+        <h3 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)' }}>
+          🔧 Utility Actions
+        </h3>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Re-grant Permissions Button */}
+          <button
+            onClick={handleReGrantPermissions}
+            disabled={permissionLoading}
+            style={{
+              backgroundColor: permissionLoading ? '#ccc' : 'var(--accent-orange)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              cursor: permissionLoading ? 'not-allowed' : 'pointer',
+              opacity: permissionLoading ? 0.6 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            {permissionLoading ? (
+              <>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid #ffffff',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                Requesting Permissions...
+              </>
+            ) : (
+              <>
+                🔓 Re-grant Permissions
+              </>
+            )}
+          </button>
+
+          {/* Re-register Token Button */}
+          <button
+            onClick={handleReRegisterToken}
+            disabled={reRegisterLoading || permission !== 'granted'}
+            style={{
+              backgroundColor: (reRegisterLoading || permission !== 'granted') ? '#ccc' : '#10b981',
+              color: 'white',
+              border: 'none',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              cursor: (reRegisterLoading || permission !== 'granted') ? 'not-allowed' : 'pointer',
+              opacity: (reRegisterLoading || permission !== 'granted') ? 0.6 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            {reRegisterLoading ? (
+              <>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid #ffffff',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                Re-registering Token...
+              </>
+            ) : (
+              <>
+                🔄 Re-register FCM Token
+              </>
+            )}
+          </button>
+
+          {permission !== 'granted' && (
+            <p style={{
+              margin: '8px 0 0 0',
+              color: 'var(--text-secondary)',
+              fontSize: '13px',
+              textAlign: 'center'
+            }}>
+              🔓 Grant permissions first to re-register FCM token
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Test Notifications */}
@@ -230,6 +386,14 @@ export default function NotificationTest() {
           <li>Test with browser in background for push notifications</li>
         </ol>
       </div>
+
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
