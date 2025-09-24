@@ -98,7 +98,7 @@ export default function Onboarding() {
   const fieldsDisabled = hasExistingProfile && !editing
 
   return (
-    <div style={{ maxWidth: 560, margin: '1rem auto', padding: 16 }}>
+    <div style={{ maxWidth: 560, margin: '1rem auto', padding: 16, paddingBottom: 120 }}>
       {/* Statistics Section */}
       {summary && (
         <motion.div
