@@ -862,27 +862,36 @@ export default function Timeline() {
 
       // Update selected meal if it's the one being commented on
       if (selectedMeal?.id === mealId) {
-        setSelectedMeal(prev => prev ? {
-          ...prev,
-          comments: [newComment, ...(prev.comments || [])],
-          comments_count: (prev.comments_count || 0) + 1
-        } : null)
+        setSelectedMeal(prev => {
+          if (!prev) return null
+          const existing = prev.comments || []
+          const already = existing.some(c => c.id === newComment.id)
+          return {
+            ...prev,
+            comments: already ? existing : [newComment, ...existing],
+            comments_count: (prev.comments_count || 0) + (already ? 0 : 1)
+          }
+        })
       }
 
       // Update meals with new comment
       setMeals(prev => prev.map(meal =>
         meal.id === mealId ? {
           ...meal,
-          comments: [newComment, ...(meal.comments || [])],
-          comments_count: (meal.comments_count || 0) + 1
+          comments: (meal.comments || []).some(c => c.id === newComment.id)
+            ? (meal.comments || [])
+            : [newComment, ...(meal.comments || [])],
+          comments_count: (meal.comments_count || 0) + ((meal.comments || []).some(c => c.id === newComment.id) ? 0 : 1)
         } : meal
       ))
 
       setBuddyMeals(prev => prev.map(meal =>
         meal.id === mealId ? {
           ...meal,
-          comments: [newComment, ...(meal.comments || [])],
-          comments_count: (meal.comments_count || 0) + 1
+          comments: (meal.comments || []).some(c => c.id === newComment.id)
+            ? (meal.comments || [])
+            : [newComment, ...(meal.comments || [])],
+          comments_count: (meal.comments_count || 0) + ((meal.comments || []).some(c => c.id === newComment.id) ? 0 : 1)
         } : meal
       ))
 
