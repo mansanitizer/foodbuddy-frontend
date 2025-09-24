@@ -12,10 +12,33 @@ export default defineConfig({
     cors: true,
     hmr: {
       port: 3030
+    },
+    headers: {
+      // Add headers for better mobile PWA support
+      'Service-Worker-Allowed': '/',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
     }
   },
   preview: {
     port: 3030,
-    host: '0.0.0.0'
+    host: '0.0.0.0',
+    headers: {
+      // Add headers for better mobile PWA support
+      'Service-Worker-Allowed': '/',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
+    }
+  },
+  build: {
+    // Ensure service worker is copied to dist
+    rollupOptions: {
+      output: {
+        // Add cache busting for mobile browsers
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
   }
 })
