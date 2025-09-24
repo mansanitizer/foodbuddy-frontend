@@ -46,7 +46,31 @@
                     result.parentElement.className = 'test error';
                 }
             } catch (error) {
-                result.innerHTML = '<p style="color: red;">❌ Backend connection failed: ' + error.message + '</p>';
+                let errorMessage = '<p style="color: red;">❌ Backend connection failed:</p>';
+
+                // Provide detailed error information
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    errorMessage += '<p style="color: red; font-size: 14px;">Network error - Backend server may not be running</p>';
+                    errorMessage += '<p style="color: red; font-size: 13px;">Make sure the backend is started on port 8000</p>';
+                    errorMessage += '<p style="color: red; font-size: 12px;">Try: python -m uvicorn main:app --host 0.0.0.0 --port 8000</p>';
+                } else if (error.message.includes('CORS')) {
+                    errorMessage += '<p style="color: red; font-size: 14px;">CORS policy blocking request</p>';
+                    errorMessage += '<p style="color: red; font-size: 13px;">Backend needs to allow requests from this domain</p>';
+                } else {
+                    errorMessage += '<p style="color: red; font-size: 14px;">Error: ' + error.message + '</p>';
+                    errorMessage += '<p style="color: red; font-size: 12px;">Error type: ' + error.name + '</p>';
+                }
+
+                // Add troubleshooting suggestions
+                errorMessage += '<div style="margin-top: 10px; font-size: 12px; color: #666;">';
+                errorMessage += '<strong>Troubleshooting:</strong><br>';
+                errorMessage += '• Check if backend server is running<br>';
+                errorMessage += '• Verify the backend URL is correct<br>';
+                errorMessage += '• Check firewall settings<br>';
+                errorMessage += '• Ensure both frontend and backend are on same network';
+                errorMessage += '</div>';
+
+                result.innerHTML = errorMessage;
                 result.parentElement.className = 'test error';
             }
         }

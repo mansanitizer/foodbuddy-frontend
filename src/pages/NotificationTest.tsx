@@ -25,7 +25,48 @@ export default function NotificationTest() {
       }
     } catch (error) {
       console.error('Failed to send test notification:', error);
-      setMessage('Failed to send test notification. Please try again.');
+
+      // Extract detailed error information
+      let errorMessage = 'Failed to send test notification. ';
+
+      if (error instanceof Error) {
+        errorMessage += `Error: ${error.message}`;
+
+        // Try to extract more details from the error
+        if (error.stack) {
+          console.error('Full error stack:', error.stack);
+        }
+
+        // Check if it's a network error
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          errorMessage += ' (Network connection issue - check if backend is running)';
+        }
+
+        // Check if it's an HTTP error
+        if ('status' in error && typeof error.status === 'number') {
+          errorMessage += ` (HTTP ${error.status})`;
+        }
+
+        // Try to get response details if available
+        if ('response' in error) {
+          const response = (error as any).response;
+          if (response && typeof response === 'object') {
+            if (response.status) {
+              errorMessage += ` - Server returned ${response.status}`;
+            }
+            if (response.data && typeof response.data === 'string') {
+              errorMessage += `: ${response.data}`;
+            } else if (response.data && response.data.message) {
+              errorMessage += `: ${response.data.message}`;
+            }
+          }
+        }
+      } else {
+        // Handle non-Error objects
+        errorMessage += `Unexpected error: ${String(error)}`;
+      }
+
+      setMessage(errorMessage);
     } finally {
       setLoading(false);
     }

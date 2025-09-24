@@ -73,6 +73,20 @@ async function runTests() {
     }
   } catch (error) {
     console.log(`${colors.red}❌ ERROR: ${error.message}${colors.reset}`);
+
+    // Provide more detailed error information
+    if (error.code === 'ECONNREFUSED') {
+      console.log(`${colors.red}   → Connection refused. Make sure the backend server is running on port 8000${colors.reset}`);
+      console.log(`${colors.red}   → Try: python -m uvicorn main:app --host 0.0.0.0 --port 8000${colors.reset}`);
+    } else if (error.code === 'ENOTFOUND') {
+      console.log(`${colors.red}   → Host not found. Check the BASE_URL in the script${colors.reset}`);
+    } else if (error.code === 'ETIMEDOUT') {
+      console.log(`${colors.red}   → Request timed out. Backend may be slow or unreachable${colors.reset}`);
+    } else {
+      console.log(`${colors.red}   → Error type: ${error.code || 'Unknown'}${colors.reset}`);
+      console.log(`${colors.red}   → Stack trace:${colors.reset}`);
+      console.error(error);
+    }
   }
 
   console.log('\n' + '='.repeat(50) + '\n');
@@ -100,6 +114,20 @@ async function runTests() {
     }
   } catch (error) {
     console.log(`${colors.red}❌ ERROR: ${error.message}${colors.reset}`);
+
+    // Provide more detailed error information
+    if (error.code === 'ECONNREFUSED') {
+      console.log(`${colors.red}   → Connection refused. Make sure the backend server is running on port 8000${colors.reset}`);
+      console.log(`${colors.red}   → Try: python -m uvicorn main:app --host 0.0.0.0 --port 8000${colors.reset}`);
+    } else if (error.code === 'ENOTFOUND') {
+      console.log(`${colors.red}   → Host not found. Check the BASE_URL in the script${colors.reset}`);
+    } else if (error.code === 'ETIMEDOUT') {
+      console.log(`${colors.red}   → Request timed out. Backend may be slow or unreachable${colors.reset}`);
+    } else {
+      console.log(`${colors.red}   → Error type: ${error.code || 'Unknown'}${colors.reset}`);
+      console.log(`${colors.red}   → Stack trace:${colors.reset}`);
+      console.error(error);
+    }
   }
 
   console.log('\n' + '='.repeat(50) + '\n');
@@ -131,6 +159,20 @@ async function runTests() {
     }
   } catch (error) {
     console.log(`${colors.red}❌ ERROR: ${error.message}${colors.reset}`);
+
+    // Provide more detailed error information
+    if (error.code === 'ECONNREFUSED') {
+      console.log(`${colors.red}   → Connection refused. Make sure the backend server is running on port 8000${colors.reset}`);
+      console.log(`${colors.red}   → Try: python -m uvicorn main:app --host 0.0.0.0 --port 8000${colors.reset}`);
+    } else if (error.code === 'ENOTFOUND') {
+      console.log(`${colors.red}   → Host not found. Check the BASE_URL in the script${colors.reset}`);
+    } else if (error.code === 'ETIMEDOUT') {
+      console.log(`${colors.red}   → Request timed out. Backend may be slow or unreachable${colors.reset}`);
+    } else {
+      console.log(`${colors.red}   → Error type: ${error.code || 'Unknown'}${colors.reset}`);
+      console.log(`${colors.red}   → Stack trace:${colors.reset}`);
+      console.error(error);
+    }
   }
 
   console.log('\n' + '='.repeat(50) + '\n');
