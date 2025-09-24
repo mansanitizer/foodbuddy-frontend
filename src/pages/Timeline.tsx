@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { api, likeMeal, unlikeMeal, postComment, getLikeStatus } from '../lib/api'
+import { api, likeMeal, unlikeMeal, postComment } from '../lib/api'
 import type { CommentPublic as CommentPublicType } from '../lib/api'
 
 type Meal = {
@@ -21,6 +21,7 @@ type Meal = {
   likes_count?: number
   liked_by_me?: boolean
   comments?: CommentPublicType[]
+  comments_count?: number
 }
 
 type MealUploadModalProps = {
@@ -34,8 +35,6 @@ type MealDetailModalProps = {
   onClose: () => void
   meal: Meal | null
   onToggleLike: (mealId: number) => void
-  mealLikes: Record<number, { count: number; liked: boolean }>
-  mealComments: Record<number, CommentPublicType[]>
   commentText: string
   onCommentTextChange: (text: string) => void
   onCommentSubmit: (mealId: number) => void
@@ -227,8 +226,6 @@ function MealDetailModal({
   onClose,
   meal,
   onToggleLike,
-  mealLikes,
-  mealComments,
   commentText,
   onCommentTextChange,
   onCommentSubmit
@@ -486,15 +483,15 @@ function MealDetailModal({
                   padding: '4px'
                 }}
                 onClick={() => onToggleLike(meal.id)}
-                title={mealLikes[meal.id]?.liked || meal.liked_by_me ? 'Unlike this meal' : 'Like this meal'}
+                title={meal.liked_by_me ? 'Unlike this meal' : 'Like this meal'}
               >
-                {mealLikes[meal.id]?.liked || meal.liked_by_me ? '❤️' : '🤍'}
+                {meal.liked_by_me ? '❤️' : '🤍'}
               </button>
               <span style={{
                 color: 'var(--text-secondary)',
                 fontSize: '14px'
               }}>
-                {mealLikes[meal.id]?.count ?? meal.likes_count ?? 0} likes
+                {meal.likes_count ?? 0} likes
               </span>
             </div>
           </div>
@@ -548,12 +545,12 @@ function MealDetailModal({
             </div>
 
             {/* Comments List */}
-            {(mealComments[meal.id] || meal.comments || []).length > 0 && (
+            {(meal.comments || []).length > 0 && (
               <div style={{
                 maxHeight: '200px',
                 overflowY: 'auto'
               }}>
-                {(mealComments[meal.id] || meal.comments || []).map((comment: CommentPublicType) => (
+                {(meal.comments || []).map((comment: CommentPublicType) => (
                   <div key={comment.id} style={{
                     padding: '8px 12px',
                     backgroundColor: 'var(--bg-secondary)',
@@ -725,8 +722,6 @@ export default function Timeline() {
   const [calorieMode, setCalorieMode] = useState<'left' | 'in'>('left')
   const [macroMode, setMacroMode] = useState<'left' | 'in'>('left')
   // Like and comment state
-  const [mealLikes, setMealLikes] = useState<Record<number, { count: number; liked: boolean }>>({})
-  const [mealComments, setMealComments] = useState<Record<number, CommentPublicType[]>>({})
   const [commentText, setCommentText] = useState('')
 
   // Calculate today's and yesterday's meals
@@ -797,38 +792,7 @@ export default function Timeline() {
       .catch(() => {})
   }, [])
 
-  // On page load and when meals update, fetch like status for each meal.
-  // Do not default to false on errors (401/404). Only set state on success.
-  useEffect(() => {
-    const allIds = Array.from(new Set([
-      ...meals.map(m => m.id),
-      ...buddyMeals.map(m => m.id)
-    ]))
-
-    const idsToFetch = allIds.filter(id => mealLikes[id] === undefined)
-    if (idsToFetch.length === 0) return
-
-    (async () => {
-      await Promise.all(idsToFetch.map(async (id) => {
-        try {
-          const status = await getLikeStatus(id)
-          // Update per-meal like map
-          setMealLikes(prev => ({
-            ...prev,
-            [id]: { count: status.likes_count, liked: status.liked_by_me }
-          }))
-          // Also reflect in meals/buddyMeals arrays
-          setMeals(prev => prev.map(meal => meal.id === id ? { ...meal, likes_count: status.likes_count, liked_by_me: status.liked_by_me } : meal))
-          setBuddyMeals(prev => prev.map(meal => meal.id === id ? { ...meal, likes_count: status.likes_count, liked_by_me: status.liked_by_me } : meal))
-          if (selectedMeal?.id === id) {
-            setSelectedMeal(prev => prev ? { ...prev, likes_count: status.likes_count, liked_by_me: status.liked_by_me } : null)
-          }
-        } catch (_) {
-          // Intentionally ignore (e.g., 401/404). Do not set liked=false.
-        }
-      }))
-    })()
-  }, [meals, buddyMeals])
+  // Backend now returns likes/comments with meals; avoid extra per-meal fetches.
 
 
   async function deleteMeal(mealId: number) {
@@ -863,85 +827,29 @@ export default function Timeline() {
   async function toggleLike(mealId: number) {
     try {
       setError(null)
-      const currentLikeState = mealLikes[mealId] || { count: 0, liked: false }
+      const source = selectedMeal?.id === mealId
+        ? selectedMeal
+        : (meals.find(m => m.id === mealId) || buddyMeals.find(m => m.id === mealId))
 
-      // Optimistically update UI
-      setMealLikes(prev => ({
-        ...prev,
-        [mealId]: {
-          count: currentLikeState.liked ? currentLikeState.count - 1 : currentLikeState.count + 1,
-          liked: !currentLikeState.liked
-        }
-      }))
+      const baselineCount = source?.likes_count || 0
+      const baselineLiked = !!source?.liked_by_me
 
-      // Update selected meal if it's the one being liked
-      if (selectedMeal?.id === mealId) {
-        setSelectedMeal(prev => prev ? {
-          ...prev,
-          likes_count: currentLikeState.liked ? (prev.likes_count || 0) - 1 : (prev.likes_count || 0) + 1,
-          liked_by_me: !currentLikeState.liked
-        } : null)
-      }
-
-      // Update all meals in the list
-      setMeals(prev => prev.map(meal =>
-        meal.id === mealId ? {
-          ...meal,
-          likes_count: currentLikeState.liked ? (meal.likes_count || 0) - 1 : (meal.likes_count || 0) + 1,
-          liked_by_me: !currentLikeState.liked
-        } : meal
-      ))
-
-      setBuddyMeals(prev => prev.map(meal =>
-        meal.id === mealId ? {
-          ...meal,
-          likes_count: currentLikeState.liked ? (meal.likes_count || 0) - 1 : (meal.likes_count || 0) + 1,
-          liked_by_me: !currentLikeState.liked
-        } : meal
-      ))
+      // Optimistically update UI: flip liked and adjust count
+      setSelectedMeal(prev => prev && prev.id === mealId ? { ...prev, liked_by_me: !baselineLiked, likes_count: baselineLiked ? Math.max(0, baselineCount - 1) : baselineCount + 1 } : prev)
+      setMeals(prev => prev.map(meal => meal.id === mealId ? { ...meal, liked_by_me: !baselineLiked, likes_count: baselineLiked ? Math.max(0, baselineCount - 1) : baselineCount + 1 } : meal))
+      setBuddyMeals(prev => prev.map(meal => meal.id === mealId ? { ...meal, liked_by_me: !baselineLiked, likes_count: baselineLiked ? Math.max(0, baselineCount - 1) : baselineCount + 1 } : meal))
 
       // Make API call
-      const result = currentLikeState.liked
-        ? await unlikeMeal(mealId)
-        : await likeMeal(mealId)
+      const result = baselineLiked ? await unlikeMeal(mealId) : await likeMeal(mealId)
 
-      // Update with server response
-      setMealLikes(prev => ({
-        ...prev,
-        [mealId]: {
-          count: result.likes_count,
-          liked: result.liked_by_me
-        }
-      }))
-
-      // Update meals with server response
-      setMeals(prev => prev.map(meal =>
-        meal.id === mealId ? {
-          ...meal,
-          likes_count: result.likes_count,
-          liked_by_me: result.liked_by_me
-        } : meal
-      ))
-
-      setBuddyMeals(prev => prev.map(meal =>
-        meal.id === mealId ? {
-          ...meal,
-          likes_count: result.likes_count,
-          liked_by_me: result.liked_by_me
-        } : meal
-      ))
+      // Reconcile with server response
+      setSelectedMeal(prev => prev && prev.id === mealId ? { ...prev, liked_by_me: result.liked_by_me, likes_count: result.likes_count } : prev)
+      setMeals(prev => prev.map(meal => meal.id === mealId ? { ...meal, liked_by_me: result.liked_by_me, likes_count: result.likes_count } : meal))
+      setBuddyMeals(prev => prev.map(meal => meal.id === mealId ? { ...meal, liked_by_me: result.liked_by_me, likes_count: result.likes_count } : meal))
 
     } catch (err: any) {
       setError(err.message || 'Failed to update like')
-      // Revert optimistic update on error
-      const currentLikeState = mealLikes[mealId] || { count: 0, liked: false }
-      setMealLikes(prev => ({
-        ...prev,
-        [mealId]: {
-          count: currentLikeState.count,
-          liked: currentLikeState.liked
-        }
-      }))
+      // On error, we could refetch, but minimally do nothing so UI remains consistent with last known data
     }
   }
 
@@ -952,17 +860,12 @@ export default function Timeline() {
       setError(null)
       const newComment = await postComment(mealId, commentText.trim())
 
-      // Update comments state
-      setMealComments(prev => ({
-        ...prev,
-        [mealId]: [newComment, ...(prev[mealId] || [])]
-      }))
-
       // Update selected meal if it's the one being commented on
       if (selectedMeal?.id === mealId) {
         setSelectedMeal(prev => prev ? {
           ...prev,
-          comments: [newComment, ...(prev.comments || [])]
+          comments: [newComment, ...(prev.comments || [])],
+          comments_count: (prev.comments_count || 0) + 1
         } : null)
       }
 
@@ -970,14 +873,16 @@ export default function Timeline() {
       setMeals(prev => prev.map(meal =>
         meal.id === mealId ? {
           ...meal,
-          comments: [newComment, ...(meal.comments || [])]
+          comments: [newComment, ...(meal.comments || [])],
+          comments_count: (meal.comments_count || 0) + 1
         } : meal
       ))
 
       setBuddyMeals(prev => prev.map(meal =>
         meal.id === mealId ? {
           ...meal,
-          comments: [newComment, ...(meal.comments || [])]
+          comments: [newComment, ...(meal.comments || [])],
+          comments_count: (meal.comments_count || 0) + 1
         } : meal
       ))
 
@@ -1354,9 +1259,9 @@ export default function Timeline() {
                     cursor: 'pointer',
                     padding: '4px'
                   }}
-                  title={mealLikes[m.id]?.liked || m.liked_by_me ? 'Unlike this meal' : 'Like this meal'}
+                  title={m.liked_by_me ? 'Unlike this meal' : 'Like this meal'}
                 >
-                  {mealLikes[m.id]?.liked || m.liked_by_me ? '❤️' : '🤍'}
+                  {m.liked_by_me ? '❤️' : '🤍'}
                 </button>
 
                 {/* Like Count */}
@@ -1365,7 +1270,7 @@ export default function Timeline() {
                   fontSize: '11px',
                   textAlign: 'center'
                 }}>
-                  {mealLikes[m.id]?.count ?? m.likes_count ?? 0}
+                  {m.likes_count ?? 0}
                 </div>
 
                 {m.isOwn && (
@@ -1413,8 +1318,6 @@ export default function Timeline() {
         onClose={() => setSelectedMeal(null)}
         meal={selectedMeal}
         onToggleLike={toggleLike}
-        mealLikes={mealLikes}
-        mealComments={mealComments}
         commentText={commentText}
         onCommentTextChange={setCommentText}
         onCommentSubmit={handleCommentSubmit}
