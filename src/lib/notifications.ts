@@ -10,17 +10,24 @@ export interface NotificationPayload {
 }
 
 // Backend API endpoints for notifications
+const API_BASE_URL = 'https://api.foodbuddy.iarm.me';
+
 export const notificationApi = {
   // Send FCM token to backend for storage
-  async registerToken(token: string) {
-    const response = await fetch('/api/notifications/token', {
+  async registerToken(fcmToken: string) {
+    const authToken = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/notifications/token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authToken ? `Bearer ${authToken}` : ''
+      },
+      body: JSON.stringify({ token: fcmToken })
     });
 
     if (!response.ok) {
-      throw new Error('Failed to register notification token');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Failed to register notification token: ${errorData.detail || response.statusText}`);
     }
 
     return response.json();
@@ -28,13 +35,18 @@ export const notificationApi = {
 
   // Test notification endpoint
   async sendTestNotification() {
-    const response = await fetch('/api/notifications/test', {
+    const authToken = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/notifications/test`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authToken ? `Bearer ${authToken}` : ''
+      }
     });
 
     if (!response.ok) {
-      throw new Error('Failed to send test notification');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Failed to send test notification: ${errorData.detail || response.statusText}`);
     }
 
     return response.json();
@@ -42,9 +54,17 @@ export const notificationApi = {
 
   // Get notification settings
   async getSettings() {
-    const response = await fetch('/api/notifications/settings');
+    const authToken = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/notifications/settings`, {
+      method: 'GET',
+      headers: {
+        'Authorization': authToken ? `Bearer ${authToken}` : ''
+      }
+    });
+
     if (!response.ok) {
-      throw new Error('Failed to get notification settings');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Failed to get notification settings: ${errorData.detail || response.statusText}`);
     }
 
     return response.json();
@@ -52,14 +72,19 @@ export const notificationApi = {
 
   // Update notification settings
   async updateSettings(settings: any) {
-    const response = await fetch('/api/notifications/settings', {
+    const authToken = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/notifications/settings`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authToken ? `Bearer ${authToken}` : ''
+      },
       body: JSON.stringify(settings)
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update notification settings');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Failed to update notification settings: ${errorData.detail || response.statusText}`);
     }
 
     return response.json();
