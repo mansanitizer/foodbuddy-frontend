@@ -25,9 +25,50 @@ export default function Onboarding() {
   const [activity, setActivity] = useState('Sedentary')
   const [saving, setSaving] = useState(false)
   const [summary, setSummary] = useState<Summary | null>(null)
+  const [hasExistingProfile, setHasExistingProfile] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [loadingUser, setLoadingUser] = useState(true)
 
   useEffect(() => {
-    api<Summary>('/analytics/summary').then(setSummary)
+    api<Summary>('/analytics/summary').then(setSummary).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    // Prefill from /users/me and lock fields if data exists
+    ;(async () => {
+      try {
+        const u = await api<any>('/users/me')
+        const dietary = Array.isArray(u?.dietary_preferences) ? u.dietary_preferences as string[] : []
+        const goalList = Array.isArray(u?.fitness_goals) ? u.fitness_goals as string[] : []
+        if (u?.name) setName(u.name)
+        if (typeof u?.age === 'number') setAge(u.age)
+        if (u?.gender) setGender(u.gender)
+        if (typeof u?.height_cm === 'number') setHeightCm(u.height_cm)
+        if (typeof u?.weight_kg === 'number') setWeightKg(u.weight_kg)
+        if (u?.activity_level) setActivity(u.activity_level)
+        if (dietary.length) setDiets(dietary)
+        if (goalList.length) setGoals(goalList)
+
+        const exists = Boolean(
+          (u?.name && u.name.trim() !== '') ||
+          typeof u?.age === 'number' ||
+          typeof u?.height_cm === 'number' ||
+          typeof u?.weight_kg === 'number' ||
+          (Array.isArray(u?.dietary_preferences) && u.dietary_preferences.length > 0) ||
+          (Array.isArray(u?.fitness_goals) && u.fitness_goals.length > 0) ||
+          u?.gender ||
+          u?.activity_level
+        )
+        setHasExistingProfile(exists)
+        setEditing(!exists) // first-time users can edit immediately
+      } catch {
+        // If /users/me fails, allow editing as onboarding
+        setHasExistingProfile(false)
+        setEditing(true)
+      } finally {
+        setLoadingUser(false)
+      }
+    })()
   }, [])
 
   async function save() {
@@ -53,6 +94,8 @@ export default function Onboarding() {
     setSaving(false)
     location.href = '/timeline'
   }
+
+  const fieldsDisabled = hasExistingProfile && !editing
 
   return (
     <div style={{ maxWidth: 560, margin: '1rem auto', padding: 16 }}>
@@ -93,9 +136,9 @@ export default function Onboarding() {
       )}
 
       <motion.h3 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>Onboarding</motion.h3>
-      <input placeholder="Full Name" value={name} onChange={e=>setName(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
-      <input placeholder="Age" type="number" value={age} onChange={e=>setAge(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
-      <select value={gender} onChange={e=>setGender(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }}>
+      <input placeholder="Full Name" value={name} onChange={e=>setName(e.target.value)} disabled={fieldsDisabled} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+      <input placeholder="Age" type="number" value={age} onChange={e=>setAge(e.target.value ? Number(e.target.value) : '')} disabled={fieldsDisabled} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+      <select value={gender} onChange={e=>setGender(e.target.value)} disabled={fieldsDisabled} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }}>
         <option value="">Gender</option>
         <option>Male</option>
         <option>Female</option>
@@ -106,31 +149,43 @@ export default function Onboarding() {
         <div>Dietary Preferences</div>
         {DIETS.map(d => (
           <label key={d} style={{ display:'inline-block', marginRight:12 }}>
-            <input type="checkbox" checked={diets.includes(d)} onChange={e=> setDiets(v => e.target.checked ? [...v, d] : v.filter(x=>x!==d)) } /> {d}
+            <input type="checkbox" checked={diets.includes(d)} disabled={fieldsDisabled} onChange={e=> setDiets(v => e.target.checked ? [...v, d] : v.filter(x=>x!==d)) } /> {d}
           </label>
         ))}
-        <input placeholder="Custom restrictions" onChange={e=> e.target.value && setDiets(v => [...v, e.target.value])} style={{ display:'block', width:'100%', marginTop:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+        <input placeholder="Custom restrictions" disabled={fieldsDisabled} onChange={e=> e.target.value && setDiets(v => [...v, e.target.value])} style={{ display:'block', width:'100%', marginTop:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
       </div>
       <div style={{ margin:'8px 0' }}>
         <div>Fitness Goals</div>
         {GOALS.map(g => (
           <label key={g} style={{ display:'inline-block', marginRight:12 }}>
-            <input type="checkbox" checked={goals.includes(g)} onChange={e=> setGoals(v => e.target.checked ? [...v, g] : v.filter(x=>x!==g)) } /> {g}
+            <input type="checkbox" checked={goals.includes(g)} disabled={fieldsDisabled} onChange={e=> setGoals(v => e.target.checked ? [...v, g] : v.filter(x=>x!==g)) } /> {g}
           </label>
         ))}
       </div>
-      <input placeholder="Height (cm)" type="number" value={heightCm} onChange={e=>setHeightCm(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
-      <input placeholder="Weight (kg)" type="number" value={weightKg} onChange={e=>setWeightKg(e.target.value ? Number(e.target.value) : '')} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
-      <select value={activity} onChange={e=>setActivity(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }}>
+      <input placeholder="Height (cm)" type="number" value={heightCm} onChange={e=>setHeightCm(e.target.value ? Number(e.target.value) : '')} disabled={fieldsDisabled} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+      <input placeholder="Weight (kg)" type="number" value={weightKg} onChange={e=>setWeightKg(e.target.value ? Number(e.target.value) : '')} disabled={fieldsDisabled} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+      <select value={activity} onChange={e=>setActivity(e.target.value)} disabled={fieldsDisabled} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }}>
         {ACTIVITY.map(a => <option key={a}>{a}</option>)}
       </select>
 
       {/* Notification Settings */}
       <NotificationSettings />
 
-      <motion.button whileTap={{ scale: 0.98 }} onClick={save} disabled={saving} style={{ width:'100%', padding:12 }}>
-        {saving ? 'Saving...' : 'Continue'}
-      </motion.button>
+      {hasExistingProfile && !editing && (
+        <motion.button whileTap={{ scale: 0.98 }} onClick={() => {
+          if (confirm('Editing may impact your suggestions. Proceed?')) {
+            setEditing(true)
+          }
+        }} disabled={loadingUser} style={{ width:'100%', padding:12 }}>
+          Edit details
+        </motion.button>
+      )}
+
+      {(!hasExistingProfile || editing) && (
+        <motion.button whileTap={{ scale: 0.98 }} onClick={save} disabled={saving || loadingUser} style={{ width:'100%', padding:12 }}>
+          {saving ? 'Saving...' : hasExistingProfile ? 'Save' : 'Continue'}
+        </motion.button>
+      )}
     </div>
   )
 }
