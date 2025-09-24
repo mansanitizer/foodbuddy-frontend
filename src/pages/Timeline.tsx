@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api, likeMeal, unlikeMeal, postComment } from '../lib/api'
 import type { CommentPublic as CommentPublicType } from '../lib/api'
-import { NotificationSettings } from '../components/NotificationSettings'
 
 type Meal = {
   id: number
@@ -1148,9 +1147,6 @@ export default function Timeline() {
           onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')}
         />
       </div>
-
-      {/* Notification Settings */}
-      <NotificationSettings />
 
       {/* Unified Timeline Display */}
       <div style={{ padding: '0 20px' }}>

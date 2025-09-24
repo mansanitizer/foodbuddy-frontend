@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { api } from '../lib/api'
+import { NotificationSettings } from '../components/NotificationSettings'
 
 type Summary = {
   current_streak_days: number
@@ -123,6 +124,10 @@ export default function Onboarding() {
       <select value={activity} onChange={e=>setActivity(e.target.value)} style={{ display:'block', width:'100%', marginBottom:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }}>
         {ACTIVITY.map(a => <option key={a}>{a}</option>)}
       </select>
+
+      {/* Notification Settings */}
+      <NotificationSettings />
+
       <motion.button whileTap={{ scale: 0.98 }} onClick={save} disabled={saving} style={{ width:'100%', padding:12 }}>
         {saving ? 'Saving...' : 'Continue'}
       </motion.button>
