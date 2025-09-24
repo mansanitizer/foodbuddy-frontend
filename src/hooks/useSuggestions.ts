@@ -23,7 +23,7 @@ export const useSuggestions = () => {
     setError(null);
 
     try {
-      const data = await suggestionsApi.getSuggestions();
+      const data = await suggestionsApi.getSuggestions(forceRefresh);
       setSuggestions(data);
       setLastFetch(now);
     } catch (err) {

@@ -29,7 +29,10 @@ export interface SuggestionsResponse {
 }
 
 export const suggestionsApi = {
-  async getSuggestions(): Promise<SuggestionsResponse> {
-    return api<SuggestionsResponse>('/recommendations/suggestions');
+  async getSuggestions(forceRefresh: boolean = false): Promise<SuggestionsResponse> {
+    const path = forceRefresh
+      ? '/recommendations/suggestions?force_refresh=true'
+      : '/recommendations/suggestions';
+    return api<SuggestionsResponse>(path);
   }
 };
