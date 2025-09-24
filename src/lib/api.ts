@@ -50,27 +50,27 @@ export interface CommentCreate {
 
 // Like a meal
 export async function likeMeal(mealId: number): Promise<LikeSummary> {
-  return api<LikeSummary>(`/api/meals/${mealId}/like`, { method: 'POST' });
+  return api<LikeSummary>(`/meals/${mealId}/like`, { method: 'POST' });
 }
 
 // Unlike a meal
 export async function unlikeMeal(mealId: number): Promise<LikeSummary> {
-  return api<LikeSummary>(`/api/meals/${mealId}/like`, { method: 'DELETE' });
+  return api<LikeSummary>(`/meals/${mealId}/like`, { method: 'DELETE' });
 }
 
 // Get like status for a meal
 export async function getLikeStatus(mealId: number): Promise<LikeSummary> {
-  return api<LikeSummary>(`/api/meals/${mealId}/likes`);
+  return api<LikeSummary>(`/meals/${mealId}/likes`);
 }
 
 // Get comments for a meal
 export async function getComments(mealId: number): Promise<CommentPublic[]> {
-  return api<CommentPublic[]>(`/api/meals/${mealId}/comments`);
+  return api<CommentPublic[]>(`/meals/${mealId}/comments`);
 }
 
 // Post a comment on a meal
 export async function postComment(mealId: number, comment: string): Promise<CommentPublic> {
-  return api<CommentPublic>(`/api/meals/${mealId}/comments`, {
+  return api<CommentPublic>(`/meals/${mealId}/comments`, {
     method: 'POST',
     body: JSON.stringify({ comment })
   });
