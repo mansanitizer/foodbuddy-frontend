@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import BottomNav from './components/BottomNav'
 import Auth from './pages/Auth'
@@ -10,70 +10,6 @@ import Timeline from './pages/Timeline'
 import Suggestions from './pages/Suggestions'
 import NotificationTest from './pages/NotificationTest'
 import { NotificationManager } from './components/NotificationManager'
-
-// Add error boundary component to catch React errors
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props)
-    this.state = { hasError: false, error: null }
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('React Error Boundary caught an error:', error, errorInfo)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-          padding: '20px',
-          backgroundColor: '#111827',
-          color: 'white',
-          textAlign: 'center'
-        }}>
-          <h1>FoodBuddy - Something went wrong</h1>
-          <p>There was an error loading the application. Please try refreshing the page.</p>
-          <button
-            onClick={() => window.location.reload()}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#3B82F6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              marginTop: '20px'
-            }}
-          >
-            Refresh Page
-          </button>
-          {this.state.error && (
-            <details style={{ marginTop: '20px', textAlign: 'left' }}>
-              <summary>Error Details</summary>
-              <pre style={{ fontSize: '12px', marginTop: '10px' }}>
-                {this.state.error.toString()}
-              </pre>
-            </details>
-          )}
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
 
 function RoutesWithAnimations({ authed, onAuthed }: { authed: boolean; onAuthed: () => void }) {
   const location = useLocation()
@@ -105,13 +41,11 @@ function App() {
 	}, [])
 
 	return (
-		<ErrorBoundary>
-			<div style={{ minHeight: '100vh' }}>
-				<BrowserRouter>
-					<RoutesWithAnimations authed={authed} onAuthed={() => setAuthed(true)} />
-				</BrowserRouter>
-			</div>
-		</ErrorBoundary>
+		<div style={{ minHeight: '100vh' }}>
+			<BrowserRouter>
+        <RoutesWithAnimations authed={authed} onAuthed={() => setAuthed(true)} />
+			</BrowserRouter>
+		</div>
 	)
 }
 

@@ -2,6 +2,14 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
+// Utility function to safely access Notification API
+const getNotificationAPI = () => {
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    return window.Notification;
+  }
+  return null;
+};
+
 const firebaseConfig = {
   apiKey: "AIzaSyCr4UejZPoSWi9JquwO32QeD8p3mJiEu4E",
   authDomain: "foodbuddy-e48dd.firebaseapp.com",
@@ -38,6 +46,11 @@ export const registerServiceWorker = async () => {
 // Request permission and get FCM token
 export const requestNotificationPermission = async () => {
   try {
+    const Notification = getNotificationAPI();
+    if (!Notification) {
+      throw new Error('Notification API not supported in this browser');
+    }
+
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       const token = await getToken(messaging, {
@@ -97,7 +110,8 @@ export const onMessageListener = () => {
 
 // Show notification (for foreground messages)
 export const showNotification = (title: string, options?: NotificationOptions) => {
-  if (Notification.permission === 'granted') {
+  const Notification = getNotificationAPI();
+  if (Notification && Notification.permission === 'granted') {
     const notification = new Notification(title, {
       icon: '/icon-192.png',
       badge: '/icon-72.png',

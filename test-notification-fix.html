@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification API Test</title>
+</head>
+<body>
+    <h1>Testing Notification API Availability</h1>
+    <div id="results"></div>
+
+    <script>
+        // Test script to verify Notification API handling
+        const resultsDiv = document.getElementById('results');
+
+        function log(message) {
+            resultsDiv.innerHTML += `<p>${message}</p>`;
+            console.log(message);
+        }
+
+        // Test 1: Check if Notification is available
+        log('Test 1: Checking Notification API availability...');
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            log('✅ Notification API is available');
+            log(`Current permission: ${Notification.permission}`);
+        } else {
+            log('❌ Notification API is NOT available');
+        }
+
+        // Test 2: Check service worker availability
+        log('Test 2: Checking Service Worker availability...');
+        if ('serviceWorker' in navigator) {
+            log('✅ Service Worker API is available');
+        } else {
+            log('❌ Service Worker API is NOT available');
+        }
+
+        // Test 3: Try to access Notification properties safely
+        log('Test 3: Testing safe Notification access...');
+        try {
+            const NotificationAPI = typeof window !== 'undefined' && 'Notification' in window ? window.Notification : null;
+            if (NotificationAPI) {
+                log(`✅ Safe access successful: permission = ${NotificationAPI.permission}`);
+            } else {
+                log('✅ Safe access successful: Notification API not available (as expected)');
+            }
+        } catch (error) {
+            log(`❌ Safe access failed: ${error.message}`);
+        }
+
+        // Test 4: Try direct Notification access (this should fail if not available)
+        log('Test 4: Testing direct Notification access...');
+        try {
+            // This line will throw if Notification is not available
+            const directAccess = Notification.permission;
+            log(`⚠️ Direct access succeeded (unexpected): ${directAccess}`);
+        } catch (error) {
+            log(`✅ Direct access failed as expected: ${error.message}`);
+        }
+
+        log('Test completed. Check console for more details.');
+    </script>
+</body>
+</html>
