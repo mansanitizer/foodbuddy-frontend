@@ -17,6 +17,24 @@ const messaging = getMessaging(app);
 
 export { messaging, app };
 
+// Register Firebase service worker for background notifications
+export const registerServiceWorker = async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      console.log('Service Worker registered successfully:', registration.scope);
+
+      return registration;
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+      throw error;
+    }
+  } else {
+    console.warn('Service workers not supported in this browser');
+    throw new Error('Service workers not supported');
+  }
+};
+
 // Request permission and get FCM token
 export const requestNotificationPermission = async () => {
   try {
@@ -25,16 +43,41 @@ export const requestNotificationPermission = async () => {
       const token = await getToken(messaging, {
         vapidKey: 'BG4qt5vEMaH7SEjPiNpE5Ewn8M2yLxwQrqS0D9RZ3HPkHCsjzmVB7ATxxHk8BBUr8z6ls5BtrSioEQ3BKoWoW7g'
       });
-      console.log('FCM Token:', token);
 
-      // Send token to your backend
-      await fetch('/api/notifications/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      });
+      if (token) {
+        console.log('FCM Token:', token);
 
-      return token;
+        // Get auth token from localStorage
+        const authToken = localStorage.getItem('token');
+
+        // Send token to backend
+        const response = await fetch('https://api.foodbuddy.iarm.me/api/notifications/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authToken ? `Bearer ${authToken}` : ''
+          },
+          body: JSON.stringify({
+            token: token,
+            platform: 'web',
+            userAgent: navigator.userAgent
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`Failed to register token: ${errorData.detail || response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Token registration result:', result);
+
+        return token;
+      } else {
+        throw new Error('Failed to get FCM token from Firebase');
+      }
+    } else {
+      throw new Error('Notification permission denied');
     }
   } catch (error) {
     console.error('Error getting notification token:', error);

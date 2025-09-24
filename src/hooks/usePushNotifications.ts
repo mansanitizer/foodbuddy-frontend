@@ -1,6 +1,6 @@
 // src/hooks/usePushNotifications.ts
 import { useState, useEffect, useCallback } from 'react';
-import { requestNotificationPermission, onMessageListener, showNotification } from '../lib/firebase';
+import { requestNotificationPermission, onMessageListener, showNotification, registerServiceWorker } from '../lib/firebase';
 
 export const usePushNotifications = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -18,6 +18,11 @@ export const usePushNotifications = () => {
     };
 
     Notification.requestPermission().then(handlePermissionChange);
+
+    // Register service worker if supported
+    if ('serviceWorker' in navigator) {
+      registerServiceWorker().catch(console.error);
+    }
 
     return () => {
       // Cleanup if needed
@@ -54,6 +59,14 @@ export const usePushNotifications = () => {
       setPermission(result);
 
       if (result === 'granted') {
+        // Register service worker for background notifications
+        try {
+          await registerServiceWorker();
+        } catch (swError) {
+          console.warn('Service worker registration failed:', swError);
+          // Continue anyway - service worker is not required for foreground notifications
+        }
+
         const fcmToken = await requestNotificationPermission();
         if (fcmToken) {
           setToken(fcmToken);
@@ -74,6 +87,14 @@ export const usePushNotifications = () => {
     }
 
     try {
+      // Ensure service worker is registered for background notifications
+      try {
+        await registerServiceWorker();
+      } catch (swError) {
+        console.warn('Service worker registration failed:', swError);
+        // Continue anyway - service worker is not required for basic functionality
+      }
+
       const fcmToken = await requestNotificationPermission();
       if (fcmToken) {
         setToken(fcmToken);

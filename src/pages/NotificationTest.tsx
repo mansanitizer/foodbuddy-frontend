@@ -89,10 +89,13 @@ export default function NotificationTest() {
           try {
             const token = await subscribeToNotifications();
             if (token) {
-              setMessage(prev => prev + ' FCM token registered successfully!');
+              setMessage(prev => prev + ` FCM token registered successfully! Token: ${token.substring(0, 20)}...`);
+            } else {
+              setMessage(prev => prev + ' (FCM token registration returned empty token)');
             }
           } catch (tokenError) {
-            setMessage(prev => prev + ' (Note: FCM token registration may need manual refresh)');
+            console.error('Token registration error:', tokenError);
+            setMessage(prev => prev + ' (FCM token registration failed - check console for details)');
           }
         }, 1000);
       } else {
@@ -115,9 +118,9 @@ export default function NotificationTest() {
       const token = await subscribeToNotifications();
 
       if (token) {
-        setMessage('✅ FCM token re-registered successfully!');
+        setMessage(`✅ FCM token re-registered successfully! Token: ${token.substring(0, 20)}...`);
       } else {
-        setMessage('❌ Failed to re-register FCM token. Please check permissions.');
+        setMessage('❌ Failed to re-register FCM token. Please check permissions and try again.');
       }
     } catch (error) {
       console.error('Error re-registering FCM token:', error);
