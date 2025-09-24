@@ -9,40 +9,44 @@ export const usePushNotifications = () => {
 
   useEffect(() => {
     // Check if browser supports notifications and service workers
-    const checkNotificationSupport = () => {
-      try {
-        // Check if Notification is available and has the expected interface
-        return typeof window !== 'undefined' &&
-               'Notification' in window &&
-               typeof Notification !== 'undefined' &&
-               typeof Notification.requestPermission === 'function';
-      } catch (e) {
-        return false;
-      }
-    };
-
-    const isNotificationSupported = checkNotificationSupport();
+    // Default to supported unless we get clear errors
     const isServiceWorkerSupported = 'serviceWorker' in navigator;
 
-    setIsSupported(isServiceWorkerSupported && isNotificationSupported);
+    // Assume notifications are supported by default, only mark as unsupported on clear errors
+    let notificationError = false;
 
-    if (isNotificationSupported) {
-      try {
-        setPermission(Notification.permission);
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        // Try to access Notification - if this fails, we'll catch it
+        const currentPermission = Notification.permission;
+        setPermission(currentPermission);
 
         // Listen for permission changes
         const handlePermissionChange = () => {
-          setPermission(Notification.permission);
+          try {
+            setPermission(Notification.permission);
+          } catch (e) {
+            console.warn('Error checking permission change:', e);
+          }
         };
 
-        Notification.requestPermission().then(handlePermissionChange);
-      } catch (e) {
-        console.warn('Error accessing Notification API:', e);
-        setPermission('denied');
+        // Try to request permission - this will work if supported
+        Notification.requestPermission().then(handlePermissionChange).catch(() => {
+          // If this fails, notifications might not be fully supported
+          console.warn('Notification.requestPermission failed');
+        });
+      } else {
+        // Fallback for browsers that don't have Notification in window
+        setPermission('default');
       }
-    } else {
+    } catch (e) {
+      console.warn('Error accessing Notification API:', e);
+      notificationError = true;
       setPermission('denied');
     }
+
+    // Only mark as unsupported if we had a clear error
+    setIsSupported(isServiceWorkerSupported && !notificationError);
 
     // Register service worker if supported
     if (isServiceWorkerSupported) {
@@ -80,24 +84,7 @@ export const usePushNotifications = () => {
 
   const requestPermission = useCallback(async () => {
     try {
-      const checkNotificationSupport = () => {
-        try {
-          return typeof window !== 'undefined' &&
-                 'Notification' in window &&
-                 typeof Notification !== 'undefined' &&
-                 typeof Notification.requestPermission === 'function';
-        } catch (e) {
-          return false;
-        }
-      };
-
-      const isNotificationSupported = checkNotificationSupport();
-      if (!isNotificationSupported) {
-        console.warn('Notification API not supported in this browser');
-        setPermission('denied');
-        return null;
-      }
-
+      // Try to request permission - if this fails, notifications aren't supported
       const result = await Notification.requestPermission();
       setPermission(result);
 

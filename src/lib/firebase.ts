@@ -5,7 +5,7 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 // Utility function to safely access Notification API
 const getNotificationAPI = () => {
   try {
-    if (typeof window !== 'undefined' && 'Notification' in window && typeof Notification !== 'undefined') {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
       return Notification;
     }
   } catch (e) {

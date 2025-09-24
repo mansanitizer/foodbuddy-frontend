@@ -17,7 +17,7 @@ export default function NotificationTest() {
       setMessage(`Test notification sent! Check your device.`);
 
       // Also try to show a browser notification if supported
-      if (permission === 'granted' && typeof window !== 'undefined' && 'Notification' in window && typeof Notification !== 'undefined') {
+      if (permission === 'granted' && typeof window !== 'undefined' && 'Notification' in window) {
         try {
           const template = NotificationTemplates[type];
           new Notification(template.title, {
