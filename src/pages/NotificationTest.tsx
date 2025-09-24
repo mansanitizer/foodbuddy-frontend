@@ -17,13 +17,17 @@ export default function NotificationTest() {
       setMessage(`Test notification sent! Check your device.`);
 
       // Also try to show a browser notification if supported
-      if (permission === 'granted' && typeof window !== 'undefined' && 'Notification' in window) {
-        const template = NotificationTemplates[type];
-        new Notification(template.title, {
-          body: template.body,
-          icon: '/icon-192.png',
-          badge: '/icon-72.png'
-        });
+      if (permission === 'granted' && typeof window !== 'undefined' && 'Notification' in window && typeof Notification !== 'undefined') {
+        try {
+          const template = NotificationTemplates[type];
+          new Notification(template.title, {
+            body: template.body,
+            icon: '/icon-192.png',
+            badge: '/icon-72.png'
+          });
+        } catch (e) {
+          console.warn('Failed to create notification:', e);
+        }
       }
     } catch (error) {
       console.error('Failed to send test notification:', error);

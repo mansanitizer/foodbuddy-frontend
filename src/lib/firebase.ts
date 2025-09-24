@@ -4,8 +4,12 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 // Utility function to safely access Notification API
 const getNotificationAPI = () => {
-  if (typeof window !== 'undefined' && 'Notification' in window) {
-    return window.Notification;
+  try {
+    if (typeof window !== 'undefined' && 'Notification' in window && typeof Notification !== 'undefined') {
+      return Notification;
+    }
+  } catch (e) {
+    console.warn('Notification API not accessible:', e);
   }
   return null;
 };
@@ -110,17 +114,21 @@ export const onMessageListener = () => {
 
 // Show notification (for foreground messages)
 export const showNotification = (title: string, options?: NotificationOptions) => {
-  const Notification = getNotificationAPI();
-  if (Notification && Notification.permission === 'granted') {
-    const notification = new Notification(title, {
-      icon: '/icon-192.png',
-      badge: '/icon-72.png',
-      ...options
-    });
+  try {
+    const NotificationAPI = getNotificationAPI();
+    if (NotificationAPI && NotificationAPI.permission === 'granted') {
+      const notification = new NotificationAPI(title, {
+        icon: '/icon-192.png',
+        badge: '/icon-72.png',
+        ...options
+      });
 
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    }
+  } catch (e) {
+    console.warn('Failed to show notification:', e);
   }
 };
