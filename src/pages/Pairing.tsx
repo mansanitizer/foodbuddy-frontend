@@ -18,19 +18,19 @@ export default function Pairing({ onLogout }: Props = {}) {
   }, [])
 
   async function generate() {
-    const res = await api<{ code: string; expires_at: string }>(`/pairing/generate`, { method: 'POST' })
+    const res = await api<{ code: string; expires_at: string }>(`/api/pairing/generate`, { method: 'POST' })
     setGenerated(res.code)
     setStatus(`Share this code. Expires: ${new Date(res.expires_at).toLocaleString()}`)
   }
 
   async function accept() {
-    await api(`/pairing/accept`, { method: 'POST', body: JSON.stringify({ code }) })
+    await api(`/api/pairing/accept`, { method: 'POST', body: JSON.stringify({ code }) })
     setStatus('Paired!')
     setHasBuddy(true)
   }
 
   async function unpair() {
-    await api(`/pairing/unpair`, { method: 'POST' })
+    await api(`/api/pairing/unpair`, { method: 'POST' })
     setStatus('Unpaired')
     setHasBuddy(false)
   }

@@ -34,7 +34,7 @@ export default function Onboarding() {
     setSaving(true)
     const tdee = calcTDEE(Number(weightKg), Number(heightCm), Number(age), gender, activity)
     const daily = Math.round(tdee)
-    await api('/users/me', {
+    await api('/api/users/me', {
       method: 'PUT',
       body: JSON.stringify({
         name,

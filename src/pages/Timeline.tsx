@@ -786,11 +786,11 @@ export default function Timeline() {
   }
 
   useEffect(() => {
-    api<Meal[]>('/meals/mine').then(setMeals).catch(e => setError(String(e)))
-    api<Meal[]>('/meals/buddy').then(setBuddyMeals).catch(() => {})
-    api<{ id:number; email:string; name?:string; buddy_id?:number; tdee?:number; daily_calorie_target?:number }>('/users/me')
-      .then(u => { 
-        setTdee(u.tdee ?? null); 
+    api<Meal[]>('/api/meals/mine').then(setMeals).catch(e => setError(String(e)))
+    api<Meal[]>('/api/meals/buddy').then(setBuddyMeals).catch(() => {})
+    api<{ id:number; email:string; name?:string; buddy_id?:number; tdee?:number; daily_calorie_target?:number }>('/api/users/me')
+      .then(u => {
+        setTdee(u.tdee ?? null);
         setTarget(u.daily_calorie_target ?? null);
         setHasBuddy(!!u.buddy_id);
       })
@@ -801,7 +801,7 @@ export default function Timeline() {
   async function deleteMeal(mealId: number) {
     if (!confirm('Delete this meal?')) return
     try {
-      await api(`/meals/${mealId}`, { method: 'DELETE' })
+      await api(`/api/meals/${mealId}`, { method: 'DELETE' })
       setMeals(meals => meals.filter(m => m.id !== mealId))
     } catch (e: any) {
       setError(e.message || 'Delete failed')
@@ -814,7 +814,7 @@ export default function Timeline() {
       const form = new FormData()
       for (let i = 0; i < files.length; i++) form.append('images', files[i])
       if (mealName) form.append('meal_name', mealName)
-      const created = await api<Meal>('/meals/upload', { method: 'POST', body: form })
+      const created = await api<Meal>('/api/meals/upload', { method: 'POST', body: form })
       setMeals(m => [created, ...m])
       setShowUploadModal(false)
     } catch (e: any) {

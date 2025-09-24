@@ -210,3 +210,235 @@ echo "✅ Validation"
 echo ""
 
 echo -e "${GREEN}🎯 Ready to test your FCM backend implementation!${NC}"
+
+# =============================================
+# LIKES AND COMMENTS API TESTS
+# =============================================
+
+echo -e "${BLUE}❤️ Likes and Comments API Tests${NC}"
+echo "Testing both API patterns: with and without /api/ prefix"
+echo ""
+
+# Test Variables
+MEAL_ID="123"  # Replace with actual meal ID
+COMMENT_TEXT="This is a test comment from curl!"
+BASE_URL="https://api.foodbuddy.iarm.me"
+
+# Test 1: Get Like Status (without /api/ prefix - matching frontend)
+echo -e "${YELLOW}🧪 Test 1: Get Like Status${NC}"
+echo "GET /meals/{id}/likes"
+echo ""
+
+curl -X GET "$BASE_URL/meals/$MEAL_ID/likes" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '{
+  "meal_id": 123,
+  "likes_count": 5,
+  "liked_by_me": true
+}'
+echo "Status: 200 OK"
+echo ""
+
+# Test 2: Get Like Status (with /api/ prefix - matching notifications)
+echo -e "${YELLOW}🧪 Test 2: Get Like Status (with /api/ prefix)${NC}"
+echo "GET /api/meals/{id}/likes"
+echo ""
+
+curl -X GET "$BASE_URL/api/meals/$MEAL_ID/likes" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '{
+  "meal_id": 123,
+  "likes_count": 5,
+  "liked_by_me": true
+}'
+echo "Status: 200 OK"
+echo ""
+
+# Test 3: Like a Meal (without /api/ prefix)
+echo -e "${YELLOW}🧪 Test 3: Like a Meal${NC}"
+echo "POST /meals/{id}/like"
+echo ""
+
+curl -X POST "$BASE_URL/meals/$MEAL_ID/like" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '{
+  "meal_id": 123,
+  "likes_count": 6,
+  "liked_by_me": true
+}'
+echo "Status: 200 OK"
+echo ""
+
+# Test 4: Like a Meal (with /api/ prefix)
+echo -e "${YELLOW}🧪 Test 4: Like a Meal (with /api/ prefix)${NC}"
+echo "POST /api/meals/{id}/like"
+echo ""
+
+curl -X POST "$BASE_URL/api/meals/$MEAL_ID/like" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '{
+  "meal_id": 123,
+  "likes_count": 6,
+  "liked_by_me": true
+}'
+echo "Status: 200 OK"
+echo ""
+
+# Test 5: Get Comments (without /api/ prefix)
+echo -e "${YELLOW}🧪 Test 5: Get Comments${NC}"
+echo "GET /meals/{id}/comments"
+echo ""
+
+curl -X GET "$BASE_URL/meals/$MEAL_ID/comments" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '[
+  {
+    "id": 1,
+    "meal_id": 123,
+    "user_id": 456,
+    "comment": "Great meal!",
+    "created_at": "2025-01-01T10:00:00Z"
+  }
+]'
+echo "Status: 200 OK"
+echo ""
+
+# Test 6: Get Comments (with /api/ prefix)
+echo -e "${YELLOW}🧪 Test 6: Get Comments (with /api/ prefix)${NC}"
+echo "GET /api/meals/{id}/comments"
+echo ""
+
+curl -X GET "$BASE_URL/api/meals/$MEAL_ID/comments" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '[
+  {
+    "id": 1,
+    "meal_id": 123,
+    "user_id": 456,
+    "comment": "Great meal!",
+    "created_at": "2025-01-01T10:00:00Z"
+  }
+]'
+echo "Status: 200 OK"
+echo ""
+
+# Test 7: Post Comment (without /api/ prefix)
+echo -e "${YELLOW}🧪 Test 7: Post Comment${NC}"
+echo "POST /meals/{id}/comments"
+echo ""
+
+curl -X POST "$BASE_URL/meals/$MEAL_ID/comments" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d "{\"comment\": \"$COMMENT_TEXT\"}" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '{
+  "id": 2,
+  "meal_id": 123,
+  "user_id": 456,
+  "comment": "This is a test comment from curl!",
+  "created_at": "2025-01-01T11:00:00Z"
+}'
+echo "Status: 201 Created"
+echo ""
+
+# Test 8: Post Comment (with /api/ prefix)
+echo -e "${YELLOW}🧪 Test 8: Post Comment (with /api/ prefix)${NC}"
+echo "POST /api/meals/{id}/comments"
+echo ""
+
+curl -X POST "$BASE_URL/api/meals/$MEAL_ID/comments" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d "{\"comment\": \"$COMMENT_TEXT\"}" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '{
+  "id": 2,
+  "meal_id": 123,
+  "user_id": 456,
+  "comment": "This is a test comment from curl!",
+  "created_at": "2025-01-01T11:00:00Z"
+}'
+echo "Status: 201 Created"
+echo ""
+
+# Test 9: Error Handling - Unauthorized
+echo -e "${YELLOW}🧪 Test 9: Error Handling - Unauthorized${NC}"
+echo "POST /meals/{id}/like (No Auth)"
+echo ""
+
+curl -X POST "$BASE_URL/meals/$MEAL_ID/like" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '{
+  "error": "Unauthorized"
+}'
+echo "Status: 401 Unauthorized"
+echo ""
+
+# Test 10: Error Handling - Invalid Meal ID
+echo -e "${YELLOW}🧪 Test 10: Error Handling - Invalid Meal ID${NC}"
+echo "POST /meals/invalid/like"
+echo ""
+
+curl -X POST "$BASE_URL/meals/invalid/like" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -w "\nStatus: %{http_code}\n\n" \
+  -s
+
+echo -e "${YELLOW}📝 Expected Response:${NC}"
+echo '{
+  "error": "Invalid meal ID"
+}'
+echo "Status: 400 Bad Request"
+echo ""
+
+echo -e "${BLUE}📋 Test Instructions for Likes/Comments:${NC}"
+echo "1. Replace 'YOUR_JWT_TOKEN_HERE' with a valid JWT token"
+echo "2. Replace '123' with an actual meal ID from your database"
+echo "3. Notice that frontend calls endpoints WITHOUT /api/ prefix"
+echo "4. Check which pattern works with your backend"
+echo "5. If /api/ prefix works, you need to fix the frontend API calls"
+echo ""
+echo -e "${RED}🔍 TROUBLESHOOTING:${NC}"
+echo "• If none of the endpoints work, check your backend routing"
+echo "• If /api/ prefix works but frontend doesn't use it, update frontend"
+echo "• If no /api/ prefix works but notifications use /api/, fix backend routing"
+echo "• Check if your backend expects different endpoint patterns"
+echo ""
+echo -e "${GREEN}🎯 Ready to debug your likes and comments backend integration!${NC}"
