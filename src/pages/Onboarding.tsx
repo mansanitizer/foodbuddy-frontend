@@ -40,6 +40,8 @@ export default function Onboarding() {
         const u = await api<any>('/users/me')
         const dietary = Array.isArray(u?.dietary_preferences) ? u.dietary_preferences as string[] : []
         const goalList = Array.isArray(u?.fitness_goals) ? u.fitness_goals as string[] : []
+        
+        // Prefill all fields from API response
         if (u?.name) setName(u.name)
         if (typeof u?.age === 'number') setAge(u.age)
         if (u?.gender) setGender(u.gender)
@@ -49,6 +51,7 @@ export default function Onboarding() {
         if (dietary.length) setDiets(dietary)
         if (goalList.length) setGoals(goalList)
 
+        // Check if any profile data exists (excluding macro_targets)
         const exists = Boolean(
           (u?.name && u.name.trim() !== '') ||
           typeof u?.age === 'number' ||

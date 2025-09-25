@@ -20,11 +20,14 @@ export default function NotificationTest() {
       if (permission === 'granted' && typeof window !== 'undefined' && 'Notification' in window) {
         try {
           const template = NotificationTemplates[type];
-          new Notification(template.title, {
-            body: template.body,
-            icon: '/icon-192.png',
-            badge: '/icon-72.png'
-          });
+          const NotificationAPI = window.Notification;
+          if (NotificationAPI) {
+            new NotificationAPI(template.title, {
+              body: template.body,
+              icon: '/icon-192.png',
+              badge: '/icon-72.png'
+            });
+          }
         } catch (e) {
           console.warn('Failed to create notification:', e);
         }
