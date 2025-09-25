@@ -50,12 +50,12 @@ export const registerServiceWorker = async () => {
 // Request permission and get FCM token
 export const requestNotificationPermission = async () => {
   try {
-    const Notification = getNotificationAPI();
-    if (!Notification) {
+    const NotificationAPI = getNotificationAPI();
+    if (!NotificationAPI) {
       throw new Error('Notification API not supported in this browser');
     }
 
-    const permission = await Notification.requestPermission();
+    const permission = await NotificationAPI.requestPermission();
     if (permission === 'granted') {
       const token = await getToken(messaging, {
         vapidKey: 'BG4qt5vEMaH7SEjPiNpE5Ewn8M2yLxwQrqS0D9RZ3HPkHCsjzmVB7ATxxHk8BBUr8z6ls5BtrSioEQ3BKoWoW7g'

@@ -5,9 +5,29 @@ import { requestNotificationPermission, onMessageListener, showNotification, reg
 // Utility function to safely access Notification API
 const getNotificationAPI = () => {
   try {
+    // Log detailed context information
+    console.log('Checking Notification API availability:', {
+      hasWindow: typeof window !== 'undefined',
+      hasNotification: typeof window !== 'undefined' && 'Notification' in window,
+      windowType: typeof window,
+      isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : 'unknown',
+      location: typeof window !== 'undefined' ? window.location?.href : 'unknown',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'
+    });
+
     if (typeof window !== 'undefined' && 'Notification' in window) {
-      console.log('Notification API is available');
-      return Notification;
+      // Additional check to see if we can actually access the Notification constructor
+      try {
+        const testNotification = window.Notification;
+        if (testNotification && typeof testNotification === 'function') {
+          console.log('Notification API is available and accessible');
+          return testNotification;
+        } else {
+          console.warn('Notification exists but is not a constructor function');
+        }
+      } catch (constructorError) {
+        console.warn('Notification constructor not accessible:', constructorError);
+      }
     } else {
       console.warn('Notification API not available in window object');
     }
@@ -24,12 +44,18 @@ export const usePushNotifications = () => {
 
   useEffect(() => {
     // Log browser and device information for debugging
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    
     console.log('Browser info:', {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
       isSecureContext: window.isSecureContext,
       hasServiceWorker: 'serviceWorker' in navigator,
-      hasNotification: 'Notification' in window
+      hasNotification: 'Notification' in window,
+      isIOS: isIOS,
+      isSafari: isSafari,
+      isIOSSafari: isIOS && isSafari
     });
 
     // Check if browser supports notifications and service workers
@@ -117,9 +143,60 @@ export const usePushNotifications = () => {
       // Try to request permission - if this fails, notifications aren't supported
       const NotificationAPI = getNotificationAPI();
       if (!NotificationAPI) {
-        const error = new Error('Notification API not available in this context');
-        console.error('Notification API check failed:', error);
-        throw error;
+        // Try alternative approaches for iOS Safari
+        console.log('Primary Notification API not available, trying alternatives...');
+        
+        // Check if we're in a service worker context
+        if (typeof self !== 'undefined' && 'Notification' in self) {
+          console.log('Found Notification API in service worker context');
+          const result = await self.Notification.requestPermission();
+          console.log('Service worker permission request result:', result);
+          setPermission(result);
+          
+          if (result === 'granted') {
+            // For service worker context, we can't get FCM token here
+            // The main thread should handle FCM token registration
+            console.log('Permission granted in service worker context');
+            return 'service-worker-granted';
+          }
+          return null;
+        }
+        
+        // Check if we're in a different global context
+        if (typeof globalThis !== 'undefined' && 'Notification' in globalThis) {
+          console.log('Found Notification API in globalThis context');
+          const result = await globalThis.Notification.requestPermission();
+          console.log('GlobalThis permission request result:', result);
+          setPermission(result);
+          
+          if (result === 'granted') {
+            try {
+              const fcmToken = await requestNotificationPermission();
+              if (fcmToken) {
+                console.log('FCM token obtained successfully via globalThis');
+                setToken(fcmToken);
+              }
+              return fcmToken || null;
+            } catch (fcmError) {
+              console.error('FCM token request failed via globalThis:', fcmError);
+            }
+          }
+          return null;
+        }
+        
+        // Special handling for iOS Safari
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+        
+        if (isIOS && isSafari) {
+          const error = new Error('Notifications may not be supported in this iOS Safari version. Please try updating Safari or using a different browser.');
+          console.error('iOS Safari Notification API not available:', error);
+          throw error;
+        } else {
+          const error = new Error('Notification API not available in any context');
+          console.error('All Notification API checks failed:', error);
+          throw error;
+        }
       }
 
       console.log('Notification API found, requesting permission...');
