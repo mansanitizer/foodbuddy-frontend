@@ -112,7 +112,7 @@ export async function postComment(mealId: number, comment: string): Promise<Comm
 // Buddy System API Functions
 export async function getBuddies(): Promise<BuddyListResponse> {
   try {
-    return await api<BuddyListResponse>('/api/pairing/buddies');
+    return await api<BuddyListResponse>('/pairing/buddies');
   } catch (error: any) {
     // Fallback for when backend doesn't support new buddy system yet
     if (error.message.includes('404') || error.message.includes('Not Found')) {
@@ -126,7 +126,7 @@ export async function getBuddies(): Promise<BuddyListResponse> {
 
 export async function getBuddyStatus(): Promise<BuddyStatusResponse> {
   try {
-    return await api<BuddyStatusResponse>('/api/pairing/status');
+    return await api<BuddyStatusResponse>('/pairing/status');
   } catch (error: any) {
     // Fallback for when backend doesn't support new buddy system yet
     if (error.message.includes('404') || error.message.includes('Not Found')) {
@@ -149,7 +149,7 @@ export async function getBuddyStatus(): Promise<BuddyStatusResponse> {
 
 export async function removeBuddy(buddyId: number): Promise<void> {
   try {
-    return await api<void>('/api/pairing/unpair', {
+    return await api<void>('/pairing/unpair', {
       method: 'POST',
       body: JSON.stringify({ buddy_id: buddyId })
     });
@@ -158,7 +158,7 @@ export async function removeBuddy(buddyId: number): Promise<void> {
     if (error.message.includes('404') || error.message.includes('Not Found')) {
       console.log('New remove buddy endpoint not available, using old unpair');
       // Fallback to old unpair endpoint (removes all buddies)
-      return api<void>('/api/pairing/unpair', {
+      return api<void>('/pairing/unpair', {
         method: 'POST'
       });
     }
@@ -168,7 +168,7 @@ export async function removeBuddy(buddyId: number): Promise<void> {
 
 export async function generatePairingCode(): Promise<PairingCodeResponse> {
   try {
-    return await api<PairingCodeResponse>('/api/pairing/generate', {
+    return await api<PairingCodeResponse>('/pairing/generate', {
       method: 'POST'
     });
   } catch (error: any) {
@@ -176,7 +176,7 @@ export async function generatePairingCode(): Promise<PairingCodeResponse> {
     if (error.message.includes('404') || error.message.includes('Not Found')) {
       console.log('New generate pairing code endpoint not available, using old endpoint');
       // Fallback to old generate endpoint
-      return api<PairingCodeResponse>('/api/pairing/generate', {
+      return api<PairingCodeResponse>('/pairing/generate', {
         method: 'POST'
       });
     }
@@ -186,7 +186,7 @@ export async function generatePairingCode(): Promise<PairingCodeResponse> {
 
 export async function acceptPairingCode(code: string): Promise<{ ok: boolean; message: string }> {
   try {
-    return await api<{ ok: boolean; message: string }>('/api/pairing/accept', {
+    return await api<{ ok: boolean; message: string }>('/pairing/accept', {
       method: 'POST',
       body: JSON.stringify({ code })
     });
@@ -195,7 +195,7 @@ export async function acceptPairingCode(code: string): Promise<{ ok: boolean; me
     if (error.message.includes('404') || error.message.includes('Not Found')) {
       console.log('New accept pairing code endpoint not available, using old endpoint');
       // Fallback to old accept endpoint
-      await api('/api/pairing/accept', {
+      await api('/pairing/accept', {
         method: 'POST',
         body: JSON.stringify({ code })
       });
