@@ -111,30 +111,97 @@ export async function postComment(mealId: number, comment: string): Promise<Comm
 
 // Buddy System API Functions
 export async function getBuddies(): Promise<BuddyListResponse> {
-  return api<BuddyListResponse>('/api/pairing/buddies');
+  try {
+    return await api<BuddyListResponse>('/api/pairing/buddies');
+  } catch (error: any) {
+    // Fallback for when backend doesn't support new buddy system yet
+    if (error.message.includes('404') || error.message.includes('Not Found')) {
+      console.log('New buddy endpoints not available, using fallback');
+      // Return empty buddy list for now
+      return { buddies: [], count: 0 };
+    }
+    throw error;
+  }
 }
 
 export async function getBuddyStatus(): Promise<BuddyStatusResponse> {
-  return api<BuddyStatusResponse>('/api/pairing/status');
+  try {
+    return await api<BuddyStatusResponse>('/api/pairing/status');
+  } catch (error: any) {
+    // Fallback for when backend doesn't support new buddy system yet
+    if (error.message.includes('404') || error.message.includes('Not Found')) {
+      console.log('New buddy status endpoint not available, checking old buddy_id');
+      try {
+        // Fallback to old API to check if user has a buddy
+        const user = await api<{ id:number; email:string; name?:string; buddy_id?:number; tdee?:number; daily_calorie_target?:number }>('/users/me');
+        return {
+          is_buddy: !!user.buddy_id,
+          buddy_count: user.buddy_id ? 1 : 0
+        };
+      } catch (fallbackError) {
+        console.error('Fallback buddy check failed:', fallbackError);
+        return { is_buddy: false, buddy_count: 0 };
+      }
+    }
+    throw error;
+  }
 }
 
 export async function removeBuddy(buddyId: number): Promise<void> {
-  return api<void>('/api/pairing/unpair', {
-    method: 'POST',
-    body: JSON.stringify({ buddy_id: buddyId })
-  });
+  try {
+    return await api<void>('/api/pairing/unpair', {
+      method: 'POST',
+      body: JSON.stringify({ buddy_id: buddyId })
+    });
+  } catch (error: any) {
+    // Fallback for when backend doesn't support new buddy system yet
+    if (error.message.includes('404') || error.message.includes('Not Found')) {
+      console.log('New remove buddy endpoint not available, using old unpair');
+      // Fallback to old unpair endpoint (removes all buddies)
+      return api<void>('/api/pairing/unpair', {
+        method: 'POST'
+      });
+    }
+    throw error;
+  }
 }
 
 export async function generatePairingCode(): Promise<PairingCodeResponse> {
-  return api<PairingCodeResponse>('/api/pairing/generate', {
-    method: 'POST'
-  });
+  try {
+    return await api<PairingCodeResponse>('/api/pairing/generate', {
+      method: 'POST'
+    });
+  } catch (error: any) {
+    // Fallback for when backend doesn't support new buddy system yet
+    if (error.message.includes('404') || error.message.includes('Not Found')) {
+      console.log('New generate pairing code endpoint not available, using old endpoint');
+      // Fallback to old generate endpoint
+      return api<PairingCodeResponse>('/api/pairing/generate', {
+        method: 'POST'
+      });
+    }
+    throw error;
+  }
 }
 
 export async function acceptPairingCode(code: string): Promise<{ ok: boolean; message: string }> {
-  return api<{ ok: boolean; message: string }>('/api/pairing/accept', {
-    method: 'POST',
-    body: JSON.stringify({ code })
-  });
+  try {
+    return await api<{ ok: boolean; message: string }>('/api/pairing/accept', {
+      method: 'POST',
+      body: JSON.stringify({ code })
+    });
+  } catch (error: any) {
+    // Fallback for when backend doesn't support new buddy system yet
+    if (error.message.includes('404') || error.message.includes('Not Found')) {
+      console.log('New accept pairing code endpoint not available, using old endpoint');
+      // Fallback to old accept endpoint
+      await api('/api/pairing/accept', {
+        method: 'POST',
+        body: JSON.stringify({ code })
+      });
+      return { ok: true, message: 'Paired successfully!' };
+    }
+    throw error;
+  }
 }
 

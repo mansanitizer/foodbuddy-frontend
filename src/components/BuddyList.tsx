@@ -110,6 +110,18 @@ const BuddyList: React.FC<BuddyListProps> = ({ onRemoveBuddy }) => {
         }}>
           <div style={{ marginBottom: '12px' }}>No buddies yet.</div>
           <div style={{ fontSize: '14px' }}>Use pairing codes to connect with friends!</div>
+          {!loading && buddies.length === 0 && (
+            <div style={{
+              marginTop: '12px',
+              padding: '8px',
+              backgroundColor: 'var(--bg-tertiary)',
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: 'var(--text-muted)'
+            }}>
+              Note: The new buddy system is being deployed. Some features may be limited.
+            </div>
+          )}
         </div>
       ) : (
         <div>
