@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { api, clearToken } from '../lib/api'
+import { api, clearToken, getBuddyStatus, generatePairingCode, acceptPairingCode } from '../lib/api'
+import type { BuddyStatusResponse } from '../lib/api'
 
 type Props = {
   onLogout?: () => void
@@ -9,30 +10,36 @@ export default function Pairing({ onLogout }: Props = {}) {
   const [code, setCode] = useState<string>('')
   const [generated, setGenerated] = useState<string>('')
   const [status, setStatus] = useState<string>('')
-  const [hasBuddy, setHasBuddy] = useState<boolean>(false)
+  const [buddyStatus, setBuddyStatus] = useState<BuddyStatusResponse | null>(null)
 
   useEffect(() => {
-    api<{ id:number; email:string; name?:string; buddy_id?:number; tdee?:number; daily_calorie_target?:number }>(`/users/me`)
-      .then(u => setHasBuddy(!!u.buddy_id))
+    getBuddyStatus()
+      .then(setBuddyStatus)
       .catch(() => {})
   }, [])
 
   async function generate() {
-    const res = await api<{ code: string; expires_at: string }>(`/api/pairing/generate`, { method: 'POST' })
+    const res = await generatePairingCode()
     setGenerated(res.code)
     setStatus(`Share this code. Expires: ${new Date(res.expires_at).toLocaleString()}`)
   }
 
   async function accept() {
-    await api(`/api/pairing/accept`, { method: 'POST', body: JSON.stringify({ code }) })
-    setStatus('Paired!')
-    setHasBuddy(true)
+    const result = await acceptPairingCode(code)
+    setStatus(result.message || 'Paired!')
+    // Refresh buddy status
+    getBuddyStatus()
+      .then(setBuddyStatus)
+      .catch(() => {})
   }
 
   async function unpair() {
     await api(`/api/pairing/unpair`, { method: 'POST' })
     setStatus('Unpaired')
-    setHasBuddy(false)
+    // Refresh buddy status
+    getBuddyStatus()
+      .then(setBuddyStatus)
+      .catch(() => {})
   }
 
   const handleLogout = () => {
@@ -44,7 +51,7 @@ export default function Pairing({ onLogout }: Props = {}) {
     <div style={{ maxWidth: 480, margin: '1rem auto', padding: 16 }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
         <h3 style={{ margin: 0 }}>Buddy Pairing</h3>
-        {hasBuddy && (
+        {buddyStatus?.is_buddy && (
           <span style={{
             width: '10px',
             height: '10px',
@@ -54,11 +61,11 @@ export default function Pairing({ onLogout }: Props = {}) {
           }} />
         )}
       </div>
-      <button onClick={generate} disabled={hasBuddy} style={{ width:'100%', padding:10, opacity: hasBuddy ? 0.6 : 1, cursor: hasBuddy ? 'not-allowed' : 'pointer', marginTop: 8 }}>Generate Code</button>
+      <button onClick={generate} disabled={buddyStatus?.is_buddy} style={{ width:'100%', padding:10, opacity: buddyStatus?.is_buddy ? 0.6 : 1, cursor: buddyStatus?.is_buddy ? 'not-allowed' : 'pointer', marginTop: 8 }}>Generate Code</button>
       {generated && <div style={{ marginTop:8, fontSize:24, fontWeight:600, textAlign:'center' }}>{generated}</div>}
       <div style={{ marginTop:12 }}>
         <input value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="Enter buddy code" style={{ width:'100%', padding:8 }} />
-        <button onClick={accept} disabled={hasBuddy} style={{ width:'100%', padding:10, marginTop:8, opacity: hasBuddy ? 0.6 : 1, cursor: hasBuddy ? 'not-allowed' : 'pointer' }}>Accept Pair</button>
+        <button onClick={accept} disabled={buddyStatus?.is_buddy} style={{ width:'100%', padding:10, marginTop:8, opacity: buddyStatus?.is_buddy ? 0.6 : 1, cursor: buddyStatus?.is_buddy ? 'not-allowed' : 'pointer' }}>Accept Pair</button>
       </div>
       <button onClick={unpair} style={{ width:'100%', padding:10, marginTop:8 }} className="danger">Unpair</button>
       {status && <div style={{ marginTop:8 }}>{status}</div>}

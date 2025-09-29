@@ -9,6 +9,7 @@ import ShareMeal from './pages/ShareMeal'
 import Timeline from './pages/Timeline'
 import Suggestions from './pages/Suggestions'
 import NotificationTest from './pages/NotificationTest'
+import Buddies from './pages/Buddies'
 import { NotificationManager } from './components/NotificationManager'
 
 function RoutesWithAnimations({ authed, onAuthed }: { authed: boolean; onAuthed: () => void }) {
@@ -20,6 +21,7 @@ function RoutesWithAnimations({ authed, onAuthed }: { authed: boolean; onAuthed:
           <Route path="/auth" element={authed ? <Navigate to="/timeline" replace /> : <Auth onSuccess={onAuthed} />} />
           <Route path="/onboarding" element={authed ? <Onboarding /> : <Navigate to="/auth" replace />} />
           <Route path="/pair" element={authed ? <Pairing /> : <Navigate to="/auth" replace />} />
+          <Route path="/buddies" element={authed ? <Buddies /> : <Navigate to="/auth" replace />} />
           <Route path="/share" element={authed ? <ShareMeal /> : <Navigate to="/auth" replace />} />
           <Route path="/timeline" element={authed ? <Timeline /> : <Navigate to="/auth" replace />} />
           <Route path="/suggestions" element={authed ? <Suggestions /> : <Navigate to="/auth" replace />} />

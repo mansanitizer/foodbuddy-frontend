@@ -53,7 +53,7 @@ export default function BottomNav() {
       </button>
 
       <button
-        onClick={() => go('/onboarding')}
+        onClick={() => go('/buddies')}
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -66,8 +66,8 @@ export default function BottomNav() {
           cursor: 'pointer'
         }}
       >
-        <span style={{ fontSize: '20px' }}>⚙️</span>
-        Settings
+        <span style={{ fontSize: '20px' }}>👥</span>
+        Buddies
       </button>
 
       <motion.button

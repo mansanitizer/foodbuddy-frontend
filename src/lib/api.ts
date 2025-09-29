@@ -48,6 +48,39 @@ export interface CommentCreate {
   comment: string;
 }
 
+// New Buddy System Types
+export interface BuddyInfo {
+  id: number;
+  name?: string;
+  email: string;
+  age?: number;
+  gender?: string;
+  dietary_preferences?: string[];
+  fitness_goals?: string[];
+  activity_level?: string;
+  daily_calorie_target?: number;
+  tdee?: number;
+}
+
+export interface BuddyListResponse {
+  buddies: BuddyInfo[];
+  count: number;
+}
+
+export interface BuddyStatusResponse {
+  is_buddy: boolean;
+  buddy_count: number;
+}
+
+export interface RemoveBuddyRequest {
+  buddy_id: number;
+}
+
+export interface PairingCodeResponse {
+  code: string;
+  expires_at: string;
+}
+
 // Like a meal
 export async function likeMeal(mealId: number): Promise<LikeSummary> {
   return api<LikeSummary>(`/meals/${mealId}/like`, { method: 'POST' });
@@ -73,6 +106,35 @@ export async function postComment(mealId: number, comment: string): Promise<Comm
   return api<CommentPublic>(`/meals/${mealId}/comments`, {
     method: 'POST',
     body: JSON.stringify({ comment })
+  });
+}
+
+// Buddy System API Functions
+export async function getBuddies(): Promise<BuddyListResponse> {
+  return api<BuddyListResponse>('/api/pairing/buddies');
+}
+
+export async function getBuddyStatus(): Promise<BuddyStatusResponse> {
+  return api<BuddyStatusResponse>('/api/pairing/status');
+}
+
+export async function removeBuddy(buddyId: number): Promise<void> {
+  return api<void>('/api/pairing/unpair', {
+    method: 'POST',
+    body: JSON.stringify({ buddy_id: buddyId })
+  });
+}
+
+export async function generatePairingCode(): Promise<PairingCodeResponse> {
+  return api<PairingCodeResponse>('/api/pairing/generate', {
+    method: 'POST'
+  });
+}
+
+export async function acceptPairingCode(code: string): Promise<{ ok: boolean; message: string }> {
+  return api<{ ok: boolean; message: string }>('/api/pairing/accept', {
+    method: 'POST',
+    body: JSON.stringify({ code })
   });
 }
 

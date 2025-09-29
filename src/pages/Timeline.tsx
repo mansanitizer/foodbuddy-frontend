@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { api, likeMeal, unlikeMeal, postComment } from '../lib/api'
-import type { CommentPublic as CommentPublicType } from '../lib/api'
+import { api, likeMeal, unlikeMeal, postComment, getBuddyStatus } from '../lib/api'
+import type { CommentPublic as CommentPublicType, BuddyStatusResponse } from '../lib/api'
 
 type Meal = {
   id: number
@@ -715,7 +715,7 @@ export default function Timeline() {
   const [error, setError] = useState<string | null>(null)
   const [tdee, setTdee] = useState<number | null>(null)
   const [target, setTarget] = useState<number | null>(null)
-  const [hasBuddy, setHasBuddy] = useState(false)
+  const [buddyStatus, setBuddyStatus] = useState<BuddyStatusResponse | null>(null)
   const [activeTab, setActiveTab] = useState<'today' | 'yesterday'>('today')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
@@ -783,12 +783,16 @@ export default function Timeline() {
   useEffect(() => {
     api<Meal[]>('/meals/mine').then(setMeals).catch(e => setError(String(e)))
     api<Meal[]>('/meals/buddy').then(setBuddyMeals).catch(() => {})
-    api<{ id:number; email:string; name?:string; buddy_id?:number; tdee?:number; daily_calorie_target?:number }>('/users/me')
+    api<{ id:number; email:string; name?:string; tdee?:number; daily_calorie_target?:number }>('/users/me')
       .then(u => {
         setTdee(u.tdee ?? null);
         setTarget(u.daily_calorie_target ?? null);
-        setHasBuddy(!!u.buddy_id);
       })
+      .catch(() => {})
+    
+    // Fetch buddy status using new API
+    getBuddyStatus()
+      .then(setBuddyStatus)
       .catch(() => {})
   }, [])
 
@@ -956,7 +960,7 @@ export default function Timeline() {
             >
               😊
             </button>
-            {hasBuddy && (
+            {buddyStatus?.is_buddy && (
               <span style={{
                 position: 'absolute',
                 top: '-2px',
@@ -1111,7 +1115,7 @@ export default function Timeline() {
           }}>
             {activeTab === 'today' ? 'Today' : 'Yesterday'}
           </h3>
-          {hasBuddy && (
+          {buddyStatus?.is_buddy && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
