@@ -61,11 +61,11 @@ export default function Pairing({ onLogout }: Props = {}) {
           }} />
         )}
       </div>
-      <button onClick={generate} disabled={buddyStatus?.is_buddy} style={{ width:'100%', padding:10, opacity: buddyStatus?.is_buddy ? 0.6 : 1, cursor: buddyStatus?.is_buddy ? 'not-allowed' : 'pointer', marginTop: 8 }}>Generate Code</button>
+      <button onClick={generate} style={{ width:'100%', padding:10, marginTop: 8 }}>Generate Code</button>
       {generated && <div style={{ marginTop:8, fontSize:24, fontWeight:600, textAlign:'center' }}>{generated}</div>}
       <div style={{ marginTop:12 }}>
         <input value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="Enter buddy code" style={{ width:'100%', padding:8 }} />
-        <button onClick={accept} disabled={buddyStatus?.is_buddy} style={{ width:'100%', padding:10, marginTop:8, opacity: buddyStatus?.is_buddy ? 0.6 : 1, cursor: buddyStatus?.is_buddy ? 'not-allowed' : 'pointer' }}>Accept Pair</button>
+        <button onClick={accept} style={{ width:'100%', padding:10, marginTop:8 }}>Accept Pair</button>
       </div>
       <button onClick={unpair} style={{ width:'100%', padding:10, marginTop:8 }} className="danger">Unpair</button>
       {status && <div style={{ marginTop:8 }}>{status}</div>}
