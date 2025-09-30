@@ -1151,21 +1151,21 @@ export default function Timeline() {
                         <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
                           {m.meal_name || 'Meal'}
                         </div>
-                        <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                          <span>🔥 {m.calories || 0} kcal</span>
-                          <span>⚡ {m.macros?.protein_g || 0}g</span>
-                          <span>🌾 {m.macros?.carbs_g || 0}g</span>
-                          <span>💧 {m.macros?.fat_g || 0}g</span>
-                        </div>
-                        {/* Rating row: buddies show only color block, mine show numeric */}
+                        {m.isOwn && (
+                          <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            <span>🔥 {m.calories || 0} kcal</span>
+                            <span>⚡ {m.macros?.protein_g || 0}g</span>
+                            <span>🌾 {m.macros?.carbs_g || 0}g</span>
+                            <span>💧 {m.macros?.fat_g || 0}g</span>
+                          </div>
+                        )}
+                        {/* Rating row */}
                         {typeof m.meal_rating === 'number' && (
                           <div style={{ marginTop: '6px', fontSize: '13px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>
                               {m.meal_rating >= 7 ? '🟩' : m.meal_rating >= 4 ? '🟨' : '🟥'}
                             </span>
-                            {m.isOwn && (
-                              <span>{m.meal_rating}/10</span>
-                            )}
+                            <span>{m.meal_rating}/10</span>
                           </div>
                         )}
                       </div>
