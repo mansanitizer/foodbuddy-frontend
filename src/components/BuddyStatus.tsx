@@ -63,7 +63,7 @@ const BuddyStatus: React.FC = () => {
             borderRadius: '50%',
             backgroundColor: '#22c55e'
           }}></div>
-          Connected with {status.buddy_count} buddy{status.buddy_count !== 1 ? 'ies' : ''}
+          Connected with {status.buddy_count} {status.buddy_count === 1 ? 'buddy' : 'buddies'}
         </span>
       ) : (
         <span style={{

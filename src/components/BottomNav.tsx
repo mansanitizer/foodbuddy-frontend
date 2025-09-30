@@ -70,6 +70,24 @@ export default function BottomNav() {
         Buddies
       </button>
 
+      <button
+        onClick={() => go('/onboarding')}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '4px',
+          background: 'none',
+          border: 'none',
+          color: 'var(--text-secondary)',
+          fontSize: '12px',
+          cursor: 'pointer'
+        }}
+      >
+        <span style={{ fontSize: '20px' }}>⚙️</span>
+        Settings
+      </button>
+
       <motion.button
         whileTap={{ scale: 0.96 }}
         onClick={() => go('/share')}
