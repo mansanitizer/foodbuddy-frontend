@@ -1136,7 +1136,7 @@ export default function Timeline() {
                     style={{ display: 'flex', flexDirection: isMine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: '8px', width: '100%' }}
                   >
                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: isMine ? 'var(--accent-orange)' : 'var(--accent-blue)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '14px' }}>{initial}</div>
-                    <div style={{ position: 'relative', width: 'calc(100% - 40px)' }}>
+                    <div style={{ position: 'relative', width: '75%' }}>
                       {isMine && (
                         <button onClick={(e) => { e.stopPropagation(); deleteMeal(m.id) }} title="Delete" style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%', background: '#ef4444', color: 'white', border: 'none', fontSize: '12px', cursor: 'pointer' }}>x</button>
                       )}
@@ -1157,6 +1157,15 @@ export default function Timeline() {
                           <span>🌾 {m.macros?.carbs_g || 0}g</span>
                           <span>💧 {m.macros?.fat_g || 0}g</span>
                         </div>
+                        {/* Rating row */}
+                        {typeof m.meal_rating === 'number' && (
+                          <div style={{ marginTop: '6px', fontSize: '13px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>
+                              {m.meal_rating >= 7 ? '🟩' : m.meal_rating >= 4 ? '🟨' : '🟥'}
+                            </span>
+                            <span>{m.meal_rating}/10</span>
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', gap: '6px', alignItems: 'center', marginTop: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                         <span>{m.liked_by_me ? '❤️' : '🤍'}</span>
