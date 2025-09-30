@@ -14,11 +14,49 @@ const DIETS = ['Omnivore','Vegetarian','Vegan','Keto','Paleo','Mediterranean']
 const GOALS = ['Weight Loss','Weight Gain','Muscle Building','Maintenance','Athletic Performance']
 const ACTIVITY = ['Sedentary','Lightly active','Moderately active','Very active','Extremely active']
 
+// Canonicalization helpers for diet tags
+const CANONICAL_MAP: Record<string, string> = {
+  'gluten free': 'gluten-free',
+  'glutenfree': 'gluten-free',
+  'no gluten': 'gluten-free',
+  'dairy free': 'dairy-free',
+  'lactose free': 'lactose-free',
+  'nut free': 'nut-free',
+  'peanut free': 'peanut-free',
+  'shellfish free': 'shellfish-free',
+  'no pork': 'no-pork',
+  'no beef': 'no-beef',
+}
+
+function normalizeTag(input: string): string {
+  const trimmed = (input || '').trim().toLowerCase()
+  if (!trimmed) return ''
+  const compact = trimmed.replace(/[_]+/g, ' ').replace(/\s+/g, ' ')
+  if (CANONICAL_MAP[compact]) return CANONICAL_MAP[compact]
+  // Default canonicalization: replace spaces with hyphens
+  return compact.replace(/\s+/g, '-')
+}
+
+function normalizeAndDedupe(tags: string[]): string[] {
+  const result: string[] = []
+  const seen = new Set<string>()
+  for (const t of tags) {
+    const n = normalizeTag(t)
+    if (!n) continue
+    if (!seen.has(n)) {
+      seen.add(n)
+      result.push(n)
+    }
+  }
+  return result
+}
+
 export default function Onboarding() {
   const [name, setName] = useState('')
   const [age, setAge] = useState<number | ''>('')
   const [gender, setGender] = useState('')
   const [diets, setDiets] = useState<string[]>([])
+  const [dietQuery, setDietQuery] = useState('')
   const [goals, setGoals] = useState<string[]>([])
   const [heightCm, setHeightCm] = useState<number | ''>('')
   const [weightKg, setWeightKg] = useState<number | ''>('')
@@ -29,6 +67,13 @@ export default function Onboarding() {
   const [editing, setEditing] = useState(false)
   const [loadingUser, setLoadingUser] = useState(true)
 
+  function commitDietQuery() {
+    const normalized = normalizeTag(dietQuery)
+    if (!normalized) return
+    setDiets(v => normalizeAndDedupe([...v, normalized]))
+    setDietQuery('')
+  }
+
   useEffect(() => {
     api<Summary>('/analytics/summary').then(setSummary).catch(() => {})
   }, [])
@@ -38,7 +83,7 @@ export default function Onboarding() {
     ;(async () => {
       try {
         const u = await api<any>('/users/me')
-        const dietary = Array.isArray(u?.dietary_preferences) ? u.dietary_preferences as string[] : []
+        const dietary = Array.isArray(u?.dietary_preferences) ? (u.dietary_preferences as string[]) : []
         const goalList = Array.isArray(u?.fitness_goals) ? u.fitness_goals as string[] : []
         
         // Prefill all fields from API response
@@ -48,7 +93,7 @@ export default function Onboarding() {
         if (typeof u?.height_cm === 'number') setHeightCm(u.height_cm)
         if (typeof u?.weight_kg === 'number') setWeightKg(u.weight_kg)
         if (u?.activity_level) setActivity(u.activity_level)
-        if (dietary.length) setDiets(dietary)
+        if (dietary.length) setDiets(normalizeAndDedupe(dietary))
         if (goalList.length) setGoals(goalList)
 
         // Check if any profile data exists (excluding macro_targets)
@@ -78,13 +123,14 @@ export default function Onboarding() {
     setSaving(true)
     const tdee = calcTDEE(Number(weightKg), Number(heightCm), Number(age), gender, activity)
     const daily = Math.round(tdee)
+    const finalDiets = normalizeAndDedupe(diets)
     await api('/users/me', {
       method: 'PUT',
       body: JSON.stringify({
         name,
         age: age ? Number(age) : undefined,
         gender,
-        dietary_preferences: diets,
+        dietary_preferences: finalDiets,
         fitness_goals: goals,
         height_cm: heightCm ? Number(heightCm) : undefined,
         weight_kg: weightKg ? Number(weightKg) : undefined,
@@ -150,12 +196,64 @@ export default function Onboarding() {
       </select>
       <div style={{ margin:'8px 0' }}>
         <div>Dietary Preferences</div>
-        {DIETS.map(d => (
-          <label key={d} style={{ display:'inline-block', marginRight:12 }}>
-            <input type="checkbox" checked={diets.includes(d)} disabled={fieldsDisabled} onChange={e=> setDiets(v => e.target.checked ? [...v, d] : v.filter(x=>x!==d)) } /> {d}
-          </label>
-        ))}
-        <input placeholder="Custom restrictions" disabled={fieldsDisabled} onChange={e=> e.target.value && setDiets(v => [...v, e.target.value])} style={{ display:'block', width:'100%', marginTop:8, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }} />
+        {DIETS.map(d => {
+          const canonical = normalizeTag(d)
+          const checked = diets.includes(canonical)
+          return (
+            <label key={d} style={{ display:'inline-block', marginRight:12 }}>
+              <input
+                type="checkbox"
+                checked={checked}
+                disabled={fieldsDisabled}
+                onChange={e => {
+                  if (e.target.checked) {
+                    setDiets(v => normalizeAndDedupe([...v, canonical]))
+                  } else {
+                    setDiets(v => v.filter(x => x !== canonical))
+                  }
+                }}
+              /> {d}
+            </label>
+          )
+        })}
+
+        {/* Chips */}
+        {diets.length > 0 && (
+          <div style={{ marginTop:8, display:'flex', flexWrap:'wrap', gap:8 }}>
+            {diets.map(tag => (
+              <span key={tag} style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'4px 8px', borderRadius:16, backgroundColor:'var(--bg-tertiary)', color:'var(--text-secondary)', border:'1px solid var(--border-color)' }}>
+                {tag}
+                {!fieldsDisabled && (
+                  <button
+                    type="button"
+                    onClick={() => setDiets(v => v.filter(t => t !== tag))}
+                    style={{ background:'transparent', border:'none', color:'var(--text-muted)', cursor:'pointer' }}
+                    aria-label={`Remove ${tag}`}
+                  >✕</button>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Add custom tags with confirm-only commit */}
+        <div style={{ display:'flex', gap:8, marginTop:8 }}>
+          <input
+            placeholder="Add custom (e.g., gluten-free, lactose-free)"
+            value={dietQuery}
+            onChange={e => setDietQuery(e.target.value)}
+            onKeyDown={e => {
+              if (fieldsDisabled) return
+              if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault()
+                commitDietQuery()
+              }
+            }}
+            disabled={fieldsDisabled}
+            style={{ flex:1, padding:10, backgroundColor:'var(--bg-secondary)', border:'1px solid var(--border-color)', borderRadius:8, color:'var(--text-primary)' }}
+          />
+          <button type="button" disabled={fieldsDisabled || !dietQuery.trim()} onClick={commitDietQuery} style={{ padding:'0 12px' }}>Add</button>
+        </div>
       </div>
       <div style={{ margin:'8px 0' }}>
         <div>Fitness Goals</div>
