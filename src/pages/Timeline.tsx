@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { api, likeMeal, unlikeMeal, postComment, getBuddyStatus } from '../lib/api'
-import type { CommentPublic as CommentPublicType, BuddyStatusResponse } from '../lib/api'
+import { api, likeMeal, unlikeMeal, postComment, getBuddyStatus, getBuddies } from '../lib/api'
+import type { CommentPublic as CommentPublicType, BuddyStatusResponse, BuddyInfo } from '../lib/api'
 
 type Meal = {
   id: number
@@ -716,6 +716,7 @@ export default function Timeline() {
   const [tdee, setTdee] = useState<number | null>(null)
   const [target, setTarget] = useState<number | null>(null)
   const [buddyStatus, setBuddyStatus] = useState<BuddyStatusResponse | null>(null)
+  const [buddies, setBuddies] = useState<BuddyInfo[]>([])
   const [activeTab, setActiveTab] = useState<'today' | 'yesterday'>('today')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
@@ -800,10 +801,24 @@ export default function Timeline() {
     getBuddyStatus()
       .then(setBuddyStatus)
       .catch(() => {})
+    
+    // Fetch buddy information to get names
+    getBuddies()
+      .then(response => setBuddies(response.buddies))
+      .catch(() => {})
   }, [])
 
   // Backend now returns likes/comments with meals; avoid extra per-meal fetches.
 
+  // Helper function to get buddy name
+  function getBuddyName(): string {
+    if (buddies.length === 0) return 'Buddy'
+    if (buddies.length === 1) {
+      return buddies[0].name || 'Buddy'
+    }
+    // If multiple buddies, show first one's name or just "Buddy"
+    return buddies[0].name || 'Buddy'
+  }
 
   async function deleteMeal(mealId: number) {
     if (!confirm('Delete this meal?')) return
@@ -1285,7 +1300,7 @@ export default function Timeline() {
                       color: 'var(--accent-blue)',
                       fontWeight: '600'
                     }}>
-                      (Buddy)
+                      ({getBuddyName()})
                     </span>
                   )}
                 </div>
