@@ -1157,13 +1157,15 @@ export default function Timeline() {
                           <span>🌾 {m.macros?.carbs_g || 0}g</span>
                           <span>💧 {m.macros?.fat_g || 0}g</span>
                         </div>
-                        {/* Rating row */}
+                        {/* Rating row: buddies show only color block, mine show numeric */}
                         {typeof m.meal_rating === 'number' && (
                           <div style={{ marginTop: '6px', fontSize: '13px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>
                               {m.meal_rating >= 7 ? '🟩' : m.meal_rating >= 4 ? '🟨' : '🟥'}
                             </span>
-                            <span>{m.meal_rating}/10</span>
+                            {m.isOwn && (
+                              <span>{m.meal_rating}/10</span>
+                            )}
                           </div>
                         )}
                       </div>
