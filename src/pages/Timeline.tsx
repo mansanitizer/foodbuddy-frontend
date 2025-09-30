@@ -727,6 +727,8 @@ export default function Timeline() {
   // Profile completeness state
   const [isProfileIncomplete, setIsProfileIncomplete] = useState(false)
   const lastTapRef = useRef<number | null>(null)
+  // Show older meals after button tap
+  const [showAllMeals, setShowAllMeals] = useState(false)
 
   // Calculate today's and yesterday's meals
   const today = new Date()
@@ -744,8 +746,15 @@ export default function Timeline() {
     new Date(b.logged_at).getTime() - new Date(a.logged_at).getTime()
   )
 
-  // Chat-style shows all meals; backend limits can be added later
-  const displayedMeals = sortedAllMeals
+  // Split meals: Today + Yesterday vs Older
+  const grouped = sortedAllMeals.reduce((acc: { recent: any[]; older: any[] }, m) => {
+    const d = parseMealDate(m.logged_at)
+    if (isSameLocalDay(d, today) || isSameLocalDay(d, yesterday)) acc.recent.push(m)
+    else acc.older.push(m)
+    return acc
+  }, { recent: [], older: [] })
+
+  const displayedMeals = showAllMeals ? sortedAllMeals : grouped.recent
 
   // Calculate calories consumed today (OWN meals only)
   const todayMineMeals = allMeals.filter(m => {
@@ -1159,6 +1168,25 @@ export default function Timeline() {
               )
             })}
           </AnimatePresence>
+        )}
+
+        {/* Show more button for older meals */}
+        {!showAllMeals && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '12px' }}>
+            <button
+              onClick={() => setShowAllMeals(true)}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '20px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer'
+              }}
+            >
+              Show more
+            </button>
+          </div>
         )}
       </div>
 
