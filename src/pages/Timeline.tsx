@@ -730,6 +730,36 @@ export default function Timeline() {
   // Show older meals after button tap
   const [showAllMeals, setShowAllMeals] = useState(false)
 
+  // Consistent buddy color palette (from provided palette)
+  const buddyPalette = [
+    '#EA0038', // Red
+    '#FA6533', // Orange
+    '#FBC538', // Yellow
+    '#AFE966', // Lime
+    '#A5B337', // Olive
+    '#06CE9C', // Emerald
+    '#02A698', // Teal
+    '#53BDEB', // Light Blue
+    '#007BFC', // Blue
+    '#5E47DE', // Purple
+    '#AE7555'  // Brown
+  ] as const
+
+  function hashStringToIndex(input: string | number, modulo: number): number {
+    const s = String(input)
+    let hash = 0
+    for (let i = 0; i < s.length; i++) {
+      hash = (hash * 31 + s.charCodeAt(i)) >>> 0
+    }
+    return hash % modulo
+  }
+
+  function getBuddyColorForMeal(meal: any): string {
+    const key = meal.user_id ?? meal.user_name ?? 'buddy'
+    const idx = hashStringToIndex(key, buddyPalette.length)
+    return buddyPalette[idx]
+  }
+
   // Calculate today's and yesterday's meals
   const today = new Date()
   const yesterday = new Date(today)
@@ -1135,14 +1165,14 @@ export default function Timeline() {
                     transition={{ delay: Math.min(idx * 0.02, 0.15) }}
                     style={{ display: 'flex', flexDirection: isMine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: '8px', width: '100%' }}
                   >
-                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: isMine ? 'var(--accent-orange)' : 'var(--accent-blue)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '14px' }}>{initial}</div>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: isMine ? 'var(--accent-orange)' : getBuddyColorForMeal(m), color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '14px' }}>{initial}</div>
                     <div style={{ position: 'relative', width: '75%' }}>
                       {isMine && (
                         <button onClick={(e) => { e.stopPropagation(); deleteMeal(m.id) }} title="Delete" style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%', background: '#ef4444', color: 'white', border: 'none', fontSize: '12px', cursor: 'pointer' }}>x</button>
                       )}
                       <div style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: '16px', padding: '10px', border: '1px solid var(--border-color)' }}>
                         {/* Name above image */}
-                        <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: m.isOwn ? 'var(--text-primary)' : getBuddyColorForMeal(m) }}>
                           {getMealDisplayName(m)}
                         </div>
                         {/* Quarter-size preview: half width and half height of previous */}
