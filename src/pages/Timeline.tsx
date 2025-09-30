@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api, likeMeal, unlikeMeal, postComment, getBuddyStatus } from '../lib/api'
 import type { CommentPublic as CommentPublicType, BuddyStatusResponse } from '../lib/api'
@@ -718,7 +718,6 @@ export default function Timeline() {
   const [tdee, setTdee] = useState<number | null>(null)
   const [target, setTarget] = useState<number | null>(null)
   const [buddyStatus, setBuddyStatus] = useState<BuddyStatusResponse | null>(null)
-  const [activeTab, setActiveTab] = useState<'today' | 'yesterday'>('today')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
   const [calorieMode, setCalorieMode] = useState<'left' | 'in'>('left')
@@ -727,6 +726,7 @@ export default function Timeline() {
   const [commentText, setCommentText] = useState('')
   // Profile completeness state
   const [isProfileIncomplete, setIsProfileIncomplete] = useState(false)
+  const lastTapRef = useRef<number | null>(null)
 
   // Calculate today's and yesterday's meals
   const today = new Date()
@@ -744,15 +744,8 @@ export default function Timeline() {
     new Date(b.logged_at).getTime() - new Date(a.logged_at).getTime()
   )
 
-  const displayedMeals = activeTab === 'today'
-    ? sortedAllMeals.filter(m => {
-        const mealDate = parseMealDate(m.logged_at)
-        return isSameLocalDay(mealDate, today)
-      })
-    : sortedAllMeals.filter(m => {
-        const mealDate = parseMealDate(m.logged_at)
-        return isSameLocalDay(mealDate, yesterday)
-      })
+  // Chat-style shows all meals; backend limits can be added later
+  const displayedMeals = sortedAllMeals
 
   // Calculate calories consumed today (OWN meals only)
   const todayMineMeals = allMeals.filter(m => {
@@ -1072,316 +1065,94 @@ export default function Timeline() {
         )}
       </AnimatePresence>
 
-      {/* Tab Navigation */}
-      <div style={{
-        display: 'flex',
-        padding: '0 20px',
-        marginTop: '20px'
-      }}>
-        <button
-          onClick={() => setActiveTab('today')}
-          style={{
-            backgroundColor: activeTab === 'today' ? 'var(--accent-orange)' : 'transparent',
-            color: activeTab === 'today' ? 'white' : 'var(--text-secondary)',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '20px',
-            fontSize: '16px',
-            fontWeight: '500',
-            marginRight: '8px'
-          }}
+      {/* Replace top tabs with condensed metrics row */}
+      <div style={{ display: 'flex', gap: '10px', padding: '12px 16px' }}>
+        <div
+          onClick={() => setCalorieMode(m => m === 'left' ? 'in' : 'left')}
+          style={{ flex: 1, backgroundColor: 'var(--bg-secondary)', borderRadius: '16px', padding: '10px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
         >
-          Today
-        </button>
-        <button
-          onClick={() => setActiveTab('yesterday')}
-          style={{
-            backgroundColor: activeTab === 'yesterday' ? 'var(--accent-orange)' : 'transparent',
-            color: activeTab === 'yesterday' ? 'white' : 'var(--text-secondary)',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '20px',
-            fontSize: '16px',
-            fontWeight: '500'
-          }}
-        >
-          Yesterday
-        </button>
-      </div>
-
-      {/* Calories Section - tap to toggle */}
-      <div onClick={() => setCalorieMode(m => m === 'left' ? 'in' : 'left')} style={{
-        backgroundColor: 'var(--bg-secondary)',
-        margin: '12px 20px 12px 20px',
-        borderRadius: '16px',
-        padding: '12px 16px',
-        textAlign: 'center'
-      }}>
-        <div style={{
-          fontSize: '28px',
-          fontWeight: 'bold',
-          color: 'var(--text-primary)',
-          marginBottom: '4px'
-        }}>
-          {calorieMode === 'left' ? caloriesLeft : todayCaloriesIn}
-        </div>
-        <div style={{
-          fontSize: '13px',
-          color: 'var(--text-secondary)',
-          marginBottom: '10px'
-        }}>
-          Calories {calorieMode === 'left' ? 'left' : 'in'}
-        </div>
-        <CircularProgress
-          percentage={caloriesPercentage}
-          size={80}
-          color="var(--accent-orange)"
-        />
-      </div>
-
-      {/* Macronutrients - tap any to toggle */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        padding: '0 20px',
-        marginBottom: '12px'
-      }}>
-        <MacroProgress
-          label="Protein"
-          value={macroMode === 'left' ? Math.max(0, targetMacros.protein - todayMacrosIn.protein) : todayMacrosIn.protein}
-          target={targetMacros.protein}
-          unit="g"
-          color="#ef4444"
-          isOver={todayMacrosIn.protein > targetMacros.protein}
-          mode={macroMode}
-          onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')}
-        />
-        <MacroProgress
-          label="Carbs"
-          value={macroMode === 'left' ? Math.max(0, targetMacros.carbs - todayMacrosIn.carbs) : todayMacrosIn.carbs}
-          target={targetMacros.carbs}
-          unit="g"
-          color="#f59e0b"
-          isOver={todayMacrosIn.carbs > targetMacros.carbs}
-          mode={macroMode}
-          onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')}
-        />
-        <MacroProgress
-          label="Fats"
-          value={macroMode === 'left' ? Math.max(0, targetMacros.fat - todayMacrosIn.fat) : todayMacrosIn.fat}
-          target={targetMacros.fat}
-          unit="g"
-          color="#3b82f6"
-          isOver={todayMacrosIn.fat > targetMacros.fat}
-          mode={macroMode}
-          onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')}
-        />
-      </div>
-
-      {/* Unified Timeline Display */}
-      <div style={{ padding: '0 20px' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '16px'
-        }}>
-          <h3 style={{
-            fontSize: '20px',
-            fontWeight: '600',
-            color: 'var(--text-primary)',
-            margin: 0
-          }}>
-            {activeTab === 'today' ? 'Today' : 'Yesterday'}
-          </h3>
-          {buddyStatus?.is_buddy && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '12px',
-              color: 'var(--text-secondary)'
-            }}>
-              <div style={{
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--accent-orange)',
-                border: '2px solid var(--bg-secondary)'
-              }}></div>
-              <span>Your meals</span>
-              <div style={{
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--accent-blue)',
-                border: '2px solid var(--bg-secondary)'
-              }}></div>
-              <span>Buddy meals</span>
-            </div>
-          )}
-        </div>
-
-        {displayedMeals.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            color: 'var(--text-secondary)',
-            padding: '40px 0'
-          }}>
-            No meals logged {activeTab === 'today' ? 'today' : 'yesterday'}
+          <div style={{ width: '44px' }}>
+            <CircularProgress percentage={caloriesPercentage} size={44} strokeWidth={4} color={'var(--accent-orange)'} />
           </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Calories {calorieMode === 'left' ? 'left' : 'in'}</div>
+            <div style={{ fontWeight: 700 }}>{calorieMode === 'left' ? caloriesLeft : todayCaloriesIn}</div>
+          </div>
+        </div>
+        <div style={{ flex: 1 }}>
+          <MacroProgress label="Protein" value={macroMode === 'left' ? Math.max(0, targetMacros.protein - todayMacrosIn.protein) : todayMacrosIn.protein} target={targetMacros.protein} unit="g" color="#ef4444" isOver={todayMacrosIn.protein > targetMacros.protein} mode={macroMode} onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <MacroProgress label="Carbs" value={macroMode === 'left' ? Math.max(0, targetMacros.carbs - todayMacrosIn.carbs) : todayMacrosIn.carbs} target={targetMacros.carbs} unit="g" color="#f59e0b" isOver={todayMacrosIn.carbs > targetMacros.carbs} mode={macroMode} onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <MacroProgress label="Fats" value={macroMode === 'left' ? Math.max(0, targetMacros.fat - todayMacrosIn.fat) : todayMacrosIn.fat} target={targetMacros.fat} unit="g" color="#3b82f6" isOver={todayMacrosIn.fat > targetMacros.fat} mode={macroMode} onToggle={() => setMacroMode(m => m === 'left' ? 'in' : 'left')} />
+        </div>
+      </div>
+
+      {/* Chat-style Timeline */}
+      <div style={{ padding: '0 12px 12px 12px' }}>
+        {displayedMeals.length === 0 ? (
+          <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '40px 0' }}>No meals logged</div>
         ) : (
           <AnimatePresence initial={false}>
-            {displayedMeals.map((m, idx) => (
-            <motion.div
-              key={`${m.isOwn ? 'mine' : 'buddy'}-${m.id}-${m.logged_at}`}
-              onClick={() => setSelectedMeal(m)}
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -5, opacity: 0 }}
-              transition={{ delay: Math.min(idx * 0.03, 0.2) }}
-              style={{
-                backgroundColor: 'var(--bg-secondary)',
-                borderRadius: '16px',
-                padding: '12px',
-                marginBottom: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease, transform 0.15s ease',
-                borderLeft: `4px solid ${m.isOwn ? 'var(--accent-orange)' : 'var(--accent-blue)'}`,
-                position: 'relative'
-              }}
-              whileHover={{ scale: 1.01 }}
-            >
-              {/* Ownership indicator */}
-              <div style={{
-                position: 'absolute',
-                top: '-4px',
-                left: '-4px',
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                backgroundColor: m.isOwn ? 'var(--accent-orange)' : 'var(--accent-blue)',
-                border: '3px solid var(--bg-primary)',
-                zIndex: 1
-              }}></div>
-
-              <img
-                src={m.image_url}
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '12px',
-                  objectFit: 'cover'
-                }}
-              />
-              <div style={{ flex: 1 }}>
-                <div style={{
-                  fontSize: '15px',
-                  fontWeight: '500',
-                  color: 'var(--text-primary)',
-                  marginBottom: '2px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  {m.meal_name || 'Meal'}
-                  <span style={{
-                    fontSize: '12px',
-                    color: m.isOwn ? 'var(--accent-orange)' : 'var(--accent-blue)',
-                    fontWeight: '600'
-                  }}>
-                    ({getMealDisplayName(m)})
-                  </span>
-                </div>
-                <div style={{
-                  fontSize: '12px',
-                  color: 'var(--text-secondary)',
-                  marginBottom: '6px'
-                }}>
-                  {parseMealDate(m.logged_at).toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                  })}
-                </div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    🔥 {m.calories || 0} kcal
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    ⚡ {m.macros?.protein_g || 0}g
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    🌾 {m.macros?.carbs_g || 0}g
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    💧 {m.macros?.fat_g || 0}g
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                {/* Like Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    toggleLike(m.id)
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '18px',
-                    cursor: 'pointer',
-                    padding: '4px'
-                  }}
-                  title={m.liked_by_me ? 'Unlike this meal' : 'Like this meal'}
-                >
-                  {m.liked_by_me ? '❤️' : '🤍'}
-                </button>
-
-                {/* Like Count */}
-                <div style={{
-                  color: 'var(--text-secondary)',
-                  fontSize: '11px',
-                  textAlign: 'center'
-                }}>
-                  {m.likes_count ?? 0}
-                </div>
-
-                {m.isOwn && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      deleteMeal(m.id)
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      fontSize: '16px',
-                      cursor: 'pointer',
-                      padding: '4px'
-                    }}
+            {displayedMeals.map((m, idx) => {
+              const currentDate = parseMealDate(m.logged_at)
+              const prev = displayedMeals[idx - 1]
+              const showDateHeader = !prev || !isSameLocalDay(parseMealDate(prev.logged_at), currentDate)
+              const isMine = !!m.isOwn
+              const initial = (isMine ? 'You' : (m.user_name || 'Buddy')).trim().charAt(0).toUpperCase() || 'A'
+              const onDoubleTap = () => {
+                const now = Date.now()
+                if (lastTapRef.current && now - lastTapRef.current < 300) {
+                  toggleLike(m.id)
+                }
+                lastTapRef.current = now
+              }
+              return (
+                <div key={`${m.isOwn ? 'mine' : 'buddy'}-${m.id}-${m.logged_at}`} style={{ marginBottom: '10px' }}>
+                  {showDateHeader && (
+                    <div style={{ textAlign: 'center', margin: '16px 0', color: 'var(--text-secondary)', fontSize: '12px' }}>
+                      {isSameLocalDay(currentDate, today) ? 'Today' : (isSameLocalDay(currentDate, yesterday) ? 'Yesterday' : currentDate.toLocaleDateString())}
+                    </div>
+                  )}
+                  <motion.div
+                    onClick={() => setSelectedMeal(m)}
+                    onDoubleClick={onDoubleTap}
+                    onTouchStart={onDoubleTap}
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -5, opacity: 0 }}
+                    transition={{ delay: Math.min(idx * 0.02, 0.15) }}
+                    style={{ display: 'flex', flexDirection: isMine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: '8px' }}
                   >
-                    🗑️
-                  </button>
-                )}
-                <div style={{
-                  color: 'var(--text-muted)',
-                  fontSize: '12px'
-                }}>
-                  Tap to view
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: isMine ? 'var(--accent-orange)' : 'var(--accent-blue)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '14px' }}>{initial}</div>
+                    <div style={{ position: 'relative', maxWidth: '75%' }}>
+                      {isMine && (
+                        <button onClick={(e) => { e.stopPropagation(); deleteMeal(m.id) }} title="Delete" style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%', background: '#ef4444', color: 'white', border: 'none', fontSize: '12px', cursor: 'pointer' }}>x</button>
+                      )}
+                      <div style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: '16px', padding: '10px', border: '1px solid var(--border-color)' }}>
+                        <img src={m.image_url} style={{ width: '100%', borderRadius: '12px', objectFit: 'cover' }} />
+                        <div style={{ marginTop: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {getMealDisplayName(m)}
+                        </div>
+                        <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                          <span>🔥 {m.calories || 0} kcal</span>
+                          <span>⚡ {m.macros?.protein_g || 0}g</span>
+                          <span>🌾 {m.macros?.carbs_g || 0}g</span>
+                          <span>💧 {m.macros?.fat_g || 0}g</span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', gap: '6px', alignItems: 'center', marginTop: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        <span>{m.liked_by_me ? '❤️' : '🤍'}</span>
+                        <span>{m.likes_count ?? 0}</span>
+                        <span style={{ opacity: 0.7 }}>· {parseMealDate(m.logged_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  </motion.div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              )
+            })}
           </AnimatePresence>
         )}
       </div>
