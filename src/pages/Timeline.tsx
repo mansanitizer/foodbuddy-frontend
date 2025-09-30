@@ -328,16 +328,14 @@ function MealDetailModal({
           padding: '12px',
           marginBottom: '12px'
         }}>
-          {/* Macros row: only for my meals */}
-          {meal.isOwn && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-              <span>🔥 {meal.calories || 0} kcal</span>
-              <span>⚡ {meal.macros?.protein_g || 0}g</span>
-              <span>🌾 {meal.macros?.carbs_g || 0}g</span>
-              <span>💧 {meal.macros?.fat_g || 0}g</span>
-              {typeof meal.macros?.fiber_g === 'number' && <span>🧵 {meal.macros?.fiber_g}g</span>}
-            </div>
-          )}
+          {/* Macros row: for all meals */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+            <span>🔥 {meal.calories || 0} kcal</span>
+            <span>⚡ {meal.macros?.protein_g || 0}g</span>
+            <span>🌾 {meal.macros?.carbs_g || 0}g</span>
+            <span>💧 {meal.macros?.fat_g || 0}g</span>
+            {typeof meal.macros?.fiber_g === 'number' && <span>🧵 {meal.macros?.fiber_g}g</span>}
+          </div>
 
           {/* Rating row: for everyone */}
           {typeof meal.meal_rating === 'number' && (
