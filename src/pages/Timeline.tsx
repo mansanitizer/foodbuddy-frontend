@@ -1145,7 +1145,8 @@ export default function Timeline() {
                         <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
                           {getMealDisplayName(m)}
                         </div>
-                        <img src={m.image_url} style={{ width: '100%', height: '260px', borderRadius: '12px', objectFit: 'cover' }} />
+                        {/* Quarter-size preview: half width and half height of previous */}
+                        <img src={m.image_url} style={{ width: '50%', height: '130px', borderRadius: '12px', objectFit: 'cover' }} />
                         {/* Meal name below image */}
                         <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
                           {m.meal_name || 'Meal'}
