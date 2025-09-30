@@ -804,8 +804,14 @@ export default function Timeline() {
     
     // Fetch buddy information to get names
     getBuddies()
-      .then(response => setBuddies(response.buddies))
-      .catch(() => {})
+      .then(response => {
+        console.log('Buddy API response:', response)
+        setBuddies(response.buddies)
+      })
+      .catch(error => {
+        console.error('Failed to fetch buddy information:', error)
+        setBuddies([])
+      })
   }, [])
 
   // Backend now returns likes/comments with meals; avoid extra per-meal fetches.
@@ -819,6 +825,15 @@ export default function Timeline() {
     // If multiple buddies, show first one's name or just "Buddy"
     return buddies[0].name || 'Buddy'
   }
+
+  // Debug logging to help identify the issue
+  useEffect(() => {
+    if (buddies.length > 0) {
+      console.log('Buddy information loaded:', buddies)
+    } else {
+      console.log('No buddy information available')
+    }
+  }, [buddies])
 
   async function deleteMeal(mealId: number) {
     if (!confirm('Delete this meal?')) return
