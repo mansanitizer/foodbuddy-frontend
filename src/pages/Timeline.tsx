@@ -723,6 +723,8 @@ export default function Timeline() {
   const [macroMode, setMacroMode] = useState<'left' | 'in'>('left')
   // Like and comment state
   const [commentText, setCommentText] = useState('')
+  // Profile completeness state
+  const [isProfileIncomplete, setIsProfileIncomplete] = useState(false)
 
   // Calculate today's and yesterday's meals
   const today = new Date()
@@ -783,10 +785,14 @@ export default function Timeline() {
   useEffect(() => {
     api<Meal[]>('/meals/mine').then(setMeals).catch(e => setError(String(e)))
     api<Meal[]>('/meals/buddy').then(setBuddyMeals).catch(() => {})
-    api<{ id:number; email:string; name?:string; tdee?:number; daily_calorie_target?:number }>('/users/me')
+    api<{ id:number; email:string; name?:string; age?:number; gender?:string; tdee?:number; daily_calorie_target?:number; dietary_preferences?: string[]; fitness_goals?: string[]; activity_level?: string }>('/users/me')
       .then(u => {
         setTdee(u.tdee ?? null);
         setTarget(u.daily_calorie_target ?? null);
+        
+        // Check if profile is complete (has essential fields beyond just email)
+        const isComplete = !!(u.name && u.age && u.gender);
+        setIsProfileIncomplete(!isComplete);
       })
       .catch(() => {})
     
@@ -992,6 +998,62 @@ export default function Timeline() {
           </button>
         </div>
       </div>
+
+      {/* Profile Incomplete Banner */}
+      <AnimatePresence>
+        {isProfileIncomplete && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            style={{
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{
+              backgroundColor: '#f59e0b',
+              padding: '12px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px'
+            }}>
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <span style={{ fontSize: '20px' }}>⚠️</span>
+                <span style={{ 
+                  fontSize: '14px', 
+                  fontWeight: '500',
+                  color: 'white'
+                }}>
+                  Complete your profile for better meal suggestions and buddy matching
+                </span>
+              </div>
+              <button
+                onClick={() => window.location.href = '/onboarding'}
+                style={{
+                  backgroundColor: 'white',
+                  color: '#f59e0b',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Complete Now
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tab Navigation */}
       <div style={{
