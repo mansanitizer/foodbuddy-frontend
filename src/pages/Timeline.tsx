@@ -24,6 +24,7 @@ type Meal = {
   liked_by_me?: boolean
   comments?: CommentPublicType[]
   comments_count?: number
+  isOwn?: boolean
 }
 
 type MealUploadModalProps = {
@@ -320,129 +321,51 @@ function MealDetailModal({
           </p>
         </div>
 
-        {/* Nutritional Information */}
+        {/* Quick facts styled like timeline */}
         <div style={{
           backgroundColor: 'var(--bg-tertiary)',
           borderRadius: '12px',
           padding: '12px',
           marginBottom: '12px'
         }}>
-          <h5 style={{
-            margin: '0 0 12px 0',
-            color: 'var(--text-primary)',
-            fontSize: '14px'
-          }}>
-            Nutritional Information
-          </h5>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '12px'
-          }}>
-            <div>
-              <span style={{ color: 'var(--text-secondary)' }}>Calories:</span>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                {meal.calories || 0} kcal
-              </div>
+          {/* Macros row: only for my meals */}
+          {meal.isOwn && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+              <span>🔥 {meal.calories || 0} kcal</span>
+              <span>⚡ {meal.macros?.protein_g || 0}g</span>
+              <span>🌾 {meal.macros?.carbs_g || 0}g</span>
+              <span>💧 {meal.macros?.fat_g || 0}g</span>
+              {typeof meal.macros?.fiber_g === 'number' && <span>🧵 {meal.macros?.fiber_g}g</span>}
             </div>
+          )}
 
-            <div>
-              <span style={{ color: 'var(--text-secondary)' }}>Confidence:</span>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                {meal.confidence_score ? Math.round(meal.confidence_score * 100) : 0}%
-              </div>
+          {/* Rating row: for everyone */}
+          {typeof meal.meal_rating === 'number' && (
+            <div style={{ marginTop: '8px', fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{meal.meal_rating >= 7 ? '🟩' : meal.meal_rating >= 4 ? '🟨' : '🟥'}</span>
+              <span>{meal.meal_rating}/10</span>
             </div>
-
-            <div>
-              <span style={{ color: 'var(--text-secondary)' }}>Rating:</span>
-              <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                {meal.meal_rating ? `${meal.meal_rating}/10` : 'N/A'}
-              </div>
-            </div>
-
-            <div>
-              <span style={{ color: 'var(--text-secondary)' }}>Protein:</span>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                {meal.macros?.protein_g || 0}g
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Macronutrients */}
-        {meal.macros && (
-          <div style={{
-            backgroundColor: 'var(--bg-tertiary)',
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '16px'
-          }}>
-            <h5 style={{
-              margin: '0 0 12px 0',
-              color: 'var(--text-primary)',
-              fontSize: '16px'
-            }}>
-              Macronutrients
-            </h5>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '12px'
-            }}>
-              <div>
-                <span style={{ color: 'var(--text-secondary)' }}>Protein:</span>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>
-                  {meal.macros.protein_g || 0}g
-                </div>
-              </div>
-
-              <div>
-                <span style={{ color: 'var(--text-secondary)' }}>Carbs:</span>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>
-                  {meal.macros.carbs_g || 0}g
-                </div>
-              </div>
-
-              <div>
-                <span style={{ color: 'var(--text-secondary)' }}>Fat:</span>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>
-                  {meal.macros.fat_g || 0}g
-                </div>
-              </div>
-
-              <div>
-                <span style={{ color: 'var(--text-secondary)' }}>Fiber:</span>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-primary)' }}>
-                  {meal.macros.fiber_g || 0}g
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Suggestions */}
-        {meal.suggestions && (
+        {/* Suggestions + tiny confidence footer */}
+        {(meal.suggestions || typeof meal.confidence_score === 'number') && (
           <div style={{
             backgroundColor: 'var(--bg-tertiary)',
             borderRadius: '12px',
             padding: '12px'
           }}>
-            <h5 style={{
-              margin: '0 0 12px 0',
-              color: 'var(--text-primary)',
-              fontSize: '14px'
-            }}>
-              Suggestions
-            </h5>
-            <p style={{
-              margin: 0,
-              color: 'var(--text-secondary)',
-              fontStyle: 'italic'
-            }}>
-              {meal.suggestions}
-            </p>
+            {meal.suggestions && (
+              <>
+                <h5 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)', fontSize: '14px' }}>Suggestions</h5>
+                <p style={{ margin: 0, color: 'var(--text-secondary)', fontStyle: 'italic' }}>{meal.suggestions}</p>
+              </>
+            )}
+            {typeof meal.confidence_score === 'number' && (
+              <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'right' }}>
+                Confidence: {Math.round(meal.confidence_score * 100)}%
+              </div>
+            )}
           </div>
         )}
 
