@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { api, likeMeal, unlikeMeal, postComment, getBuddyStatus, getBuddies } from '../lib/api'
-import type { CommentPublic as CommentPublicType, BuddyStatusResponse, BuddyInfo } from '../lib/api'
+import { api, likeMeal, unlikeMeal, postComment, getBuddyStatus } from '../lib/api'
+import type { CommentPublic as CommentPublicType, BuddyStatusResponse } from '../lib/api'
 
 type Meal = {
   id: number
@@ -18,6 +18,8 @@ type Meal = {
   suggestions?: string
   confidence_score?: number
   logged_at: string
+  user_id?: number
+  user_name?: string
   likes_count?: number
   liked_by_me?: boolean
   comments?: CommentPublicType[]
@@ -716,7 +718,7 @@ export default function Timeline() {
   const [tdee, setTdee] = useState<number | null>(null)
   const [target, setTarget] = useState<number | null>(null)
   const [buddyStatus, setBuddyStatus] = useState<BuddyStatusResponse | null>(null)
-  const [buddies, setBuddies] = useState<BuddyInfo[]>([])
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<'today' | 'yesterday'>('today')
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null)
@@ -732,11 +734,8 @@ export default function Timeline() {
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
 
-  // Combine own meals and buddy meals into unified timeline
-  const allMeals = [
-    ...meals.map(meal => ({ ...meal, isOwn: true })),
-    ...buddyMeals.map(meal => ({ ...meal, isOwn: false }))
-  ]
+  // Combine all meals into unified timeline
+  const allMeals = [...meals, ...buddyMeals]
 
   // Sort all meals chronologically (newest first)
   const sortedAllMeals = allMeals.sort((a, b) =>
@@ -754,9 +753,9 @@ export default function Timeline() {
       })
 
   // Calculate calories consumed today (OWN meals only)
-  const todayMineMeals = meals.filter(m => {
+  const todayMineMeals = allMeals.filter(m => {
     const mealDate = parseMealDate(m.logged_at)
-    return isSameLocalDay(mealDate, today)
+    return isSameLocalDay(mealDate, today) && m.user_id === currentUserId
   })
 
   const todayCaloriesIn = todayMineMeals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
@@ -788,6 +787,7 @@ export default function Timeline() {
     api<Meal[]>('/meals/buddy').then(setBuddyMeals).catch(() => {})
     api<{ id:number; email:string; name?:string; age?:number; gender?:string; tdee?:number; daily_calorie_target?:number; dietary_preferences?: string[]; fitness_goals?: string[]; activity_level?: string }>('/users/me')
       .then(u => {
+        setCurrentUserId(u.id);
         setTdee(u.tdee ?? null);
         setTarget(u.daily_calorie_target ?? null);
         
@@ -801,39 +801,17 @@ export default function Timeline() {
     getBuddyStatus()
       .then(setBuddyStatus)
       .catch(() => {})
-    
-    // Fetch buddy information to get names
-    getBuddies()
-      .then(response => {
-        console.log('Buddy API response:', response)
-        setBuddies(response.buddies)
-      })
-      .catch(error => {
-        console.error('Failed to fetch buddy information:', error)
-        setBuddies([])
-      })
   }, [])
 
   // Backend now returns likes/comments with meals; avoid extra per-meal fetches.
 
-  // Helper function to get buddy name
-  function getBuddyName(): string {
-    if (buddies.length === 0) return 'Buddy'
-    if (buddies.length === 1) {
-      return buddies[0].name || 'Buddy'
+  // Helper function to get display name for a meal
+  function getMealDisplayName(meal: Meal): string {
+    if (meal.user_id === currentUserId) {
+      return 'You'
     }
-    // If multiple buddies, show first one's name or just "Buddy"
-    return buddies[0].name || 'Buddy'
+    return meal.user_name || 'Buddy'
   }
-
-  // Debug logging to help identify the issue
-  useEffect(() => {
-    if (buddies.length > 0) {
-      console.log('Buddy information loaded:', buddies)
-    } else {
-      console.log('No buddy information available')
-    }
-  }, [buddies])
 
   async function deleteMeal(mealId: number) {
     if (!confirm('Delete this meal?')) return
@@ -1247,7 +1225,7 @@ export default function Timeline() {
           <AnimatePresence initial={false}>
             {displayedMeals.map((m, idx) => (
             <motion.div
-              key={`${(m as any).isOwn ? 'mine' : 'buddy'}-${m.id}-${m.logged_at}`}
+              key={`${m.user_id === currentUserId ? 'mine' : 'buddy'}-${m.id}-${m.logged_at}`}
               onClick={() => setSelectedMeal(m)}
               initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -1263,7 +1241,7 @@ export default function Timeline() {
                 gap: '12px',
                 cursor: 'pointer',
                 transition: 'background-color 0.2s ease, transform 0.15s ease',
-                borderLeft: `4px solid ${m.isOwn ? 'var(--accent-orange)' : 'var(--accent-blue)'}`,
+                borderLeft: `4px solid ${m.user_id === currentUserId ? 'var(--accent-orange)' : 'var(--accent-blue)'}`,
                 position: 'relative'
               }}
               whileHover={{ scale: 1.01 }}
@@ -1276,7 +1254,7 @@ export default function Timeline() {
                 width: '12px',
                 height: '12px',
                 borderRadius: '50%',
-                backgroundColor: m.isOwn ? 'var(--accent-orange)' : 'var(--accent-blue)',
+                backgroundColor: m.user_id === currentUserId ? 'var(--accent-orange)' : 'var(--accent-blue)',
                 border: '3px solid var(--bg-primary)',
                 zIndex: 1
               }}></div>
@@ -1301,23 +1279,13 @@ export default function Timeline() {
                   gap: '8px'
                 }}>
                   {m.meal_name || 'Meal'}
-                  {m.isOwn ? (
-                    <span style={{
-                      fontSize: '12px',
-                      color: 'var(--accent-orange)',
-                      fontWeight: '600'
-                    }}>
-                      (You)
-                    </span>
-                  ) : (
-                    <span style={{
-                      fontSize: '12px',
-                      color: 'var(--accent-blue)',
-                      fontWeight: '600'
-                    }}>
-                      ({getBuddyName()})
-                    </span>
-                  )}
+                  <span style={{
+                    fontSize: '12px',
+                    color: m.user_id === currentUserId ? 'var(--accent-orange)' : 'var(--accent-blue)',
+                    fontWeight: '600'
+                  }}>
+                    ({getMealDisplayName(m)})
+                  </span>
                 </div>
                 <div style={{
                   fontSize: '12px',
@@ -1378,7 +1346,7 @@ export default function Timeline() {
                   {m.likes_count ?? 0}
                 </div>
 
-                {m.isOwn && (
+                {m.user_id === currentUserId && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
