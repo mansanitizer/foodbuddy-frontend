@@ -16,7 +16,7 @@ function RoutesWithAnimations({ authed, onAuthed }: { authed: boolean; onAuthed:
   const location = useLocation()
   return (
     <AnimatePresence mode="wait">
-      <motion.div key={location.pathname} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}>
+      <motion.div key={location.pathname} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }} style={{ transform: 'scale(0.8)', transformOrigin: 'top center' }}>
         <Routes location={location}>
           <Route path="/auth" element={authed ? <Navigate to="/timeline" replace /> : <Auth onSuccess={onAuthed} />} />
           <Route path="/onboarding" element={authed ? <Onboarding /> : <Navigate to="/auth" replace />} />

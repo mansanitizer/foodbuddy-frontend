@@ -1124,19 +1124,24 @@ export default function Timeline() {
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -5, opacity: 0 }}
                     transition={{ delay: Math.min(idx * 0.02, 0.15) }}
-                    style={{ display: 'flex', flexDirection: isMine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: '8px' }}
+                    style={{ display: 'flex', flexDirection: isMine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: '8px', width: '100%' }}
                   >
                     <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: isMine ? 'var(--accent-orange)' : 'var(--accent-blue)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '14px' }}>{initial}</div>
-                    <div style={{ position: 'relative', maxWidth: '75%' }}>
+                    <div style={{ position: 'relative', width: 'calc(100% - 40px)' }}>
                       {isMine && (
                         <button onClick={(e) => { e.stopPropagation(); deleteMeal(m.id) }} title="Delete" style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%', background: '#ef4444', color: 'white', border: 'none', fontSize: '12px', cursor: 'pointer' }}>x</button>
                       )}
                       <div style={{ backgroundColor: 'var(--bg-secondary)', borderRadius: '16px', padding: '10px', border: '1px solid var(--border-color)' }}>
-                        <img src={m.image_url} style={{ width: '100%', borderRadius: '12px', objectFit: 'cover' }} />
-                        <div style={{ marginTop: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {/* Name above image */}
+                        <div style={{ marginBottom: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
                           {getMealDisplayName(m)}
                         </div>
-                        <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        <img src={m.image_url} style={{ width: '100%', height: '260px', borderRadius: '12px', objectFit: 'cover' }} />
+                        {/* Meal name below image */}
+                        <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {m.meal_name || 'Meal'}
+                        </div>
+                        <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                           <span>🔥 {m.calories || 0} kcal</span>
                           <span>⚡ {m.macros?.protein_g || 0}g</span>
                           <span>🌾 {m.macros?.carbs_g || 0}g</span>
