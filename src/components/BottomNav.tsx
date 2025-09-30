@@ -14,29 +14,15 @@ export default function BottomNav() {
       backgroundColor: 'var(--bg-secondary)',
       borderTop: '1px solid var(--border-color)',
       display: 'flex',
-      justifyContent: 'space-around',
+      justifyContent: 'space-between',
       alignItems: 'center',
       padding: '12px 20px',
       height: '80px',
       zIndex: 100
     }}>
-      <button style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '4px',
-        background: 'none',
-        border: 'none',
-        color: 'var(--text-secondary)',
-        fontSize: '12px'
-      }} onClick={() => go('/timeline')}>
-        <span style={{ fontSize: '20px' }}>🏠</span>
-        Home
-      </button>
-
-      <button
-        onClick={() => go('/suggestions')}
-        style={{
+      {/* Left side buttons */}
+      <div style={{ display: 'flex', gap: '20px' }}>
+        <button style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -44,50 +30,32 @@ export default function BottomNav() {
           background: 'none',
           border: 'none',
           color: 'var(--text-secondary)',
-          fontSize: '12px',
-          cursor: 'pointer'
-        }}
-      >
-        <span style={{ fontSize: '20px' }}>💡</span>
-        Suggestions
-      </button>
+          fontSize: '12px'
+        }} onClick={() => go('/timeline')}>
+          <span style={{ fontSize: '20px' }}>🏠</span>
+          Home
+        </button>
 
-      <button
-        onClick={() => go('/buddies')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '4px',
-          background: 'none',
-          border: 'none',
-          color: 'var(--text-secondary)',
-          fontSize: '12px',
-          cursor: 'pointer'
-        }}
-      >
-        <span style={{ fontSize: '20px' }}>👥</span>
-        Buddies
-      </button>
+        <button
+          onClick={() => go('/suggestions')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>💡</span>
+          Suggestions
+        </button>
+      </div>
 
-      <button
-        onClick={() => go('/onboarding')}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '4px',
-          background: 'none',
-          border: 'none',
-          color: 'var(--text-secondary)',
-          fontSize: '12px',
-          cursor: 'pointer'
-        }}
-      >
-        <span style={{ fontSize: '20px' }}>⚙️</span>
-        Settings
-      </button>
-
+      {/* Center (+) button */}
       <motion.button
         whileTap={{ scale: 0.96 }}
         onClick={() => go('/share')}
@@ -108,6 +76,45 @@ export default function BottomNav() {
       >
         +
       </motion.button>
+
+      {/* Right side buttons */}
+      <div style={{ display: 'flex', gap: '20px' }}>
+        <button
+          onClick={() => go('/buddies')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>👥</span>
+          Buddies
+        </button>
+
+        <button
+          onClick={() => go('/onboarding')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            fontSize: '12px',
+            cursor: 'pointer'
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>⚙️</span>
+          Settings
+        </button>
+      </div>
     </div>
   )
 }
