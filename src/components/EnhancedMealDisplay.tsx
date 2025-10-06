@@ -47,27 +47,44 @@ export default function EnhancedMealDisplay({
     }
   };
 
-  const shouldShowAlternatives = (meal: Meal): boolean => {
-    return (meal.confidence_score ?? 0) < 0.7 || 
-      (meal.alternatives?.some(alt => alt.confidence > 0.4) ?? false);
+  const shouldShowAlternatives = (_meal: Meal): boolean => {
+    // Show alternatives if confidence is low OR if alternatives exist
+    return (_meal.confidence_score ?? 0) < 0.7 || 
+      (_meal.alternatives && _meal.alternatives.length > 0) || true; // Always show for testing
   };
 
-  const shouldShowTextCorrection = (meal: Meal): boolean => {
-    return (meal.confidence_score ?? 0) < 0.6;
+  const shouldShowTextCorrection = (_meal: Meal): boolean => {
+    // Always show text correction for user's own meals
+    return isOwn;
   };
 
-  const shouldShowQuickEdit = (meal: Meal): boolean => {
-    return (meal.confidence_score ?? 0) < 0.8;
+  const shouldShowQuickEdit = (_meal: Meal): boolean => {
+    // Always show quick edit for user's own meals
+    return isOwn;
   };
 
   // Initialize UI state based on meal data
   useEffect(() => {
+    const showAlt = shouldShowAlternatives(meal);
+    const showQuick = shouldShowQuickEdit(meal);
+    const showText = shouldShowTextCorrection(meal);
+    
+    console.log('EnhancedMealDisplay Debug:', {
+      mealId: meal.id,
+      confidence_score: meal.confidence_score,
+      alternatives: meal.alternatives,
+      isOwn,
+      showAlternatives: showAlt,
+      showQuickEdit: showQuick,
+      showTextCorrection: showText
+    });
+    
     setState(prev => ({
       ...prev,
-      showAlternatives: shouldShowAlternatives(meal),
-      showQuickEdit: shouldShowQuickEdit(meal)
+      showAlternatives: showAlt,
+      showQuickEdit: showQuick
     }));
-  }, [meal]);
+  }, [meal, isOwn]);
 
   const handleAlternativeSelect = async (_alternative: Alternative, updatedMeal: Meal) => {
     onUpdate(updatedMeal);
@@ -276,7 +293,19 @@ export default function EnhancedMealDisplay({
       {/* Alternatives Selector */}
       {isOwn && (
         <AlternativesSelector
-          alternatives={meal.alternatives || []}
+          alternatives={meal.alternatives || [
+            // Mock alternatives for testing
+            {
+              name: "Chicken Tikka Masala",
+              confidence: 0.65,
+              reason: "Similar color and texture to curry dishes"
+            },
+            {
+              name: "Paneer Butter Masala", 
+              confidence: 0.55,
+              reason: "Vegetarian alternative with creamy sauce"
+            }
+          ]}
           onSelect={handleAlternativeSelect}
           onError={onError}
           mealId={meal.id}
