@@ -24,16 +24,27 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage(function(payload) {
   console.log('Received background message ', payload);
 
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/icon-192.png',
-    badge: '/icon-72.png',
-    tag: payload.notification.tag,
-    data: payload.data
-  };
+  // If payload.notification exists, FCM/browser will display it automatically.
+  // To avoid duplicate notifications, only manually show for data-only messages.
+  if (payload && !payload.notification) {
+    const title = (payload.data && payload.data.title) || 'FoodBuddy';
+    const body = payload.data && payload.data.body;
+    const tag = payload.data && payload.data.tag;
+    const clickAction = payload.data && payload.data.click_action;
 
-  return self.registration.showNotification(notificationTitle, notificationOptions);
+    const notificationOptions = {
+      body: body,
+      icon: '/icon-192.png',
+      badge: '/icon-72.png',
+      tag: tag,
+      data: { ...payload.data, click_action: clickAction }
+    };
+
+    return self.registration.showNotification(title, notificationOptions);
+  }
+
+  // Skip manual display to prevent duplicates when notification payload is present
+  return undefined;
 });
 
 // Handle notification clicks

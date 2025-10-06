@@ -205,3 +205,59 @@ export async function acceptPairingCode(code: string): Promise<{ ok: boolean; me
   }
 }
 
+// Enhanced Meal Analysis API Functions
+import type { 
+  Meal, 
+  MealUploadResponse, 
+  CorrectionRequest, 
+  CorrectionResponse, 
+  SelectAlternativeRequest, 
+  SelectAlternativeResponse
+} from '../types/meal';
+
+// Enhanced upload with user description support
+export async function uploadMeal(
+  images: File[], 
+  userDescription?: string
+): Promise<MealUploadResponse> {
+  const formData = new FormData();
+  images.forEach(img => formData.append('images', img));
+  if (userDescription) {
+    formData.append('meal_name', userDescription);
+  }
+  
+  return api<MealUploadResponse>('/meals/upload', {
+    method: 'POST',
+    body: formData
+  });
+}
+
+// Submit correction for a meal
+export async function submitCorrection(
+  mealId: number, 
+  correction: CorrectionRequest
+): Promise<CorrectionResponse> {
+  return api<CorrectionResponse>(`/meals/${mealId}/correction`, {
+    method: 'POST',
+    body: JSON.stringify(correction)
+  });
+}
+
+// Select an alternative for a meal
+export async function selectAlternative(
+  mealId: number, 
+  request: SelectAlternativeRequest
+): Promise<SelectAlternativeResponse> {
+  return api<SelectAlternativeResponse>(`/meals/${mealId}/select-alternative`, {
+    method: 'POST',
+    body: JSON.stringify(request)
+  });
+}
+
+// Mark meal as accurate (thumbs up)
+export async function markMealAccurate(mealId: number): Promise<Meal> {
+  return api<Meal>(`/meals/${mealId}/accurate`, {
+    method: 'POST'
+  });
+}
+

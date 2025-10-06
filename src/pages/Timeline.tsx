@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api, likeMeal, unlikeMeal, postComment, getBuddyStatus } from '../lib/api'
 import type { CommentPublic as CommentPublicType, BuddyStatusResponse } from '../lib/api'
+import EnhancedMealDisplay from '../components/EnhancedMealDisplay'
+import ErrorHandler, { useErrorHandler } from '../components/ErrorHandler'
+import type { Meal as EnhancedMeal } from '../types/meal'
 
 type Meal = {
   id: number
@@ -41,6 +44,8 @@ type MealDetailModalProps = {
   commentText: string
   onCommentTextChange: (text: string) => void
   onCommentSubmit: (mealId: number) => void
+  onUpdateMeal: (meal: Meal) => void
+  onError: (error: string) => void
 }
 
 interface CircularProgressProps {
@@ -155,7 +160,7 @@ function MealUploadModal({ isOpen, onClose, onUpload }: MealUploadModalProps) {
         />
 
         <input
-          placeholder="Meal name (optional)"
+          placeholder="Describe your meal (optional)"
           value={mealName}
           onChange={e => setMealName(e.target.value)}
           style={{
@@ -231,7 +236,9 @@ function MealDetailModal({
   onToggleLike,
   commentText,
   onCommentTextChange,
-  onCommentSubmit
+  onCommentSubmit,
+  onUpdateMeal,
+  onError
 }: MealDetailModalProps) {
   return (
     <AnimatePresence>
@@ -304,14 +311,6 @@ function MealDetailModal({
             }}
           />
 
-          <h4 style={{
-            margin: '0 0 8px 0',
-            color: 'var(--text-primary)',
-            fontSize: '18px'
-          }}>
-            {meal.meal_name || 'Meal'}
-          </h4>
-
           <p style={{
             margin: '0 0 16px 0',
             color: 'var(--text-secondary)',
@@ -321,51 +320,15 @@ function MealDetailModal({
           </p>
         </div>
 
-        {/* Quick facts styled like timeline */}
-        <div style={{
-          backgroundColor: 'var(--bg-tertiary)',
-          borderRadius: '12px',
-          padding: '12px',
-          marginBottom: '12px'
-        }}>
-          {/* Macros row: for all meals */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-            <span>🔥 {meal.calories || 0} kcal</span>
-            <span>⚡ {meal.macros?.protein_g || 0}g</span>
-            <span>🌾 {meal.macros?.carbs_g || 0}g</span>
-            <span>💧 {meal.macros?.fat_g || 0}g</span>
-            {typeof meal.macros?.fiber_g === 'number' && <span>🧵 {meal.macros?.fiber_g}g</span>}
-          </div>
-
-          {/* Rating row: for everyone */}
-          {typeof meal.meal_rating === 'number' && (
-            <div style={{ marginTop: '8px', fontSize: '14px', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>{meal.meal_rating >= 7 ? '🟩' : meal.meal_rating >= 4 ? '🟨' : '🟥'}</span>
-              <span>{meal.meal_rating}/10</span>
-            </div>
-          )}
-        </div>
-
-        {/* Suggestions + tiny confidence footer */}
-        {(meal.suggestions || typeof meal.confidence_score === 'number') && (
-          <div style={{
-            backgroundColor: 'var(--bg-tertiary)',
-            borderRadius: '12px',
-            padding: '12px'
-          }}>
-            {meal.suggestions && (
-              <>
-                <h5 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)', fontSize: '14px' }}>Suggestions</h5>
-                <p style={{ margin: 0, color: 'var(--text-secondary)', fontStyle: 'italic' }}>{meal.suggestions}</p>
-              </>
-            )}
-            {typeof meal.confidence_score === 'number' && (
-              <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'right' }}>
-                Confidence: {Math.round(meal.confidence_score * 100)}%
-              </div>
-            )}
-          </div>
-        )}
+        {/* Enhanced Meal Display */}
+        <EnhancedMealDisplay
+          meal={meal as EnhancedMeal}
+          onUpdate={(updatedMeal: EnhancedMeal) => {
+            onUpdateMeal(updatedMeal as Meal);
+          }}
+          onError={onError}
+          isOwn={meal.isOwn}
+        />
 
         {/* Like and Comment Section */}
         <div style={{
@@ -635,7 +598,7 @@ function CircularProgress({ percentage, size = 80, strokeWidth = 8, color = 'var
 export default function Timeline() {
   const [meals, setMeals] = useState<Meal[]>([])
   const [buddyMeals, setBuddyMeals] = useState<Meal[]>([])
-  const [error, setError] = useState<string | null>(null)
+  const { error, handleError, clearError } = useErrorHandler()
   const [tdee, setTdee] = useState<number | null>(null)
   const [target, setTarget] = useState<number | null>(null)
   const [buddyStatus, setBuddyStatus] = useState<BuddyStatusResponse | null>(null)
@@ -746,7 +709,7 @@ export default function Timeline() {
       // Set both arrays separately for potential future use
       setMeals(mineMeals)
       setBuddyMeals(buddyMeals)
-    }).catch(e => setError(String(e)))
+    }).catch(e => handleError(String(e)))
     
     api<{ id:number; email:string; name?:string; age?:number; gender?:string; tdee?:number; daily_calorie_target?:number; dietary_preferences?: string[]; fitness_goals?: string[]; activity_level?: string }>('/users/me')
       .then(u => {
@@ -781,12 +744,12 @@ export default function Timeline() {
       await api(`/meals/${mealId}`, { method: 'DELETE' })
       setMeals(meals => meals.filter(m => m.id !== mealId))
     } catch (e: any) {
-      setError(e.message || 'Delete failed')
+      handleError(e.message || 'Delete failed')
     }
   }
 
   async function handleMealUpload(mealName: string, files: FileList) {
-    setError(null)
+    clearError()
     try {
       const form = new FormData()
       for (let i = 0; i < files.length; i++) form.append('images', files[i])
@@ -795,7 +758,7 @@ export default function Timeline() {
       setMeals(m => [created, ...m])
       setShowUploadModal(false)
     } catch (e: any) {
-      setError(e.message || 'Upload failed')
+      handleError(e.message || 'Upload failed')
     }
   }
 
@@ -806,7 +769,7 @@ export default function Timeline() {
   // Like and comment functions
   async function toggleLike(mealId: number) {
     try {
-      setError(null)
+      clearError()
       const source = selectedMeal?.id === mealId
         ? selectedMeal
         : (meals.find(m => m.id === mealId) || buddyMeals.find(m => m.id === mealId))
@@ -828,7 +791,7 @@ export default function Timeline() {
       setBuddyMeals(prev => prev.map(meal => meal.id === mealId ? { ...meal, liked_by_me: result.liked_by_me, likes_count: result.likes_count } : meal))
 
     } catch (err: any) {
-      setError(err.message || 'Failed to update like')
+      handleError(err.message || 'Failed to update like')
       // On error, we could refetch, but minimally do nothing so UI remains consistent with last known data
     }
   }
@@ -837,7 +800,7 @@ export default function Timeline() {
     if (!commentText.trim()) return
 
     try {
-      setError(null)
+      clearError()
       const newComment = await postComment(mealId, commentText.trim())
 
       // Update selected meal if it's the one being commented on
@@ -877,7 +840,7 @@ export default function Timeline() {
 
       setCommentText('')
     } catch (err: any) {
-      setError(err.message || 'Failed to post comment')
+      handleError(err.message || 'Failed to post comment')
     }
   }
 
@@ -1170,24 +1133,23 @@ export default function Timeline() {
         commentText={commentText}
         onCommentTextChange={setCommentText}
         onCommentSubmit={handleCommentSubmit}
+        onUpdateMeal={(updatedMeal) => {
+          setSelectedMeal(updatedMeal);
+          setMeals((prev: Meal[]) => prev.map((m: Meal) => m.id === updatedMeal.id ? updatedMeal : m));
+          setBuddyMeals((prev: Meal[]) => prev.map((m: Meal) => m.id === updatedMeal.id ? updatedMeal : m));
+        }}
+        onError={handleError}
       />
 
       {/* Analytics modal removed in favor of navigating to /profile */}
 
-      {error && (
-        <div style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          backgroundColor: '#ef4444',
-          color: 'white',
-          padding: '12px 16px',
-          borderRadius: '8px',
-          fontSize: '14px'
-        }}>
-          {error}
-        </div>
-      )}
+      {/* Enhanced Error Handler */}
+      <ErrorHandler
+        error={error}
+        onDismiss={clearError}
+        autoHide={true}
+        duration={5000}
+      />
     </div>
   )
 }
