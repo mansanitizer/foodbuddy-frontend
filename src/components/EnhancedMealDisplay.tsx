@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import AlternativesSelector from './AlternativesSelector';
 import QuickEditControls from './QuickEditControls';
 import TextCorrectionModal from './TextCorrectionModal';
@@ -7,12 +7,7 @@ import { markMealAccurate } from '../lib/api';
 import type { 
   Meal, 
   Alternative, 
-  MealDisplayState,
-  getConfidenceLevel,
-  getConfidenceColor,
-  shouldShowAlternatives,
-  shouldShowTextCorrection,
-  shouldShowQuickEdit
+  MealDisplayState
 } from '../types/meal';
 
 interface EnhancedMealDisplayProps {
@@ -74,7 +69,7 @@ export default function EnhancedMealDisplay({
     }));
   }, [meal]);
 
-  const handleAlternativeSelect = async (alternative: Alternative, updatedMeal: Meal) => {
+  const handleAlternativeSelect = async (_alternative: Alternative, updatedMeal: Meal) => {
     onUpdate(updatedMeal);
     setState(prev => ({ ...prev, showAlternatives: false }));
   };
@@ -115,7 +110,6 @@ export default function EnhancedMealDisplay({
     setState(prev => ({ ...prev, showCorrectionModal: false }));
   };
 
-  const confidenceLevel = getConfidenceLevel(meal.confidence_score);
   const confidenceColor = getConfidenceColor(meal.confidence_score);
 
   return (
